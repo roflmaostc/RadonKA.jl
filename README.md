@@ -1,4 +1,4 @@
-# KAradon.jl
+# RadonKA.jl
 A simple but still decently fast radon and iradon transform based on KernelAbstractions.jl
 
 
