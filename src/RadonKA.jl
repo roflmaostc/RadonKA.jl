@@ -21,9 +21,12 @@ function distance_to_boundary(x, y, θ, R)
 
 	d = sqrt(x^2 + y^2)
 	α = acos(x/d)
-	β = y < 0 ? π - θ - α : π - θ + α
+	β = y <= 0 ? π - θ - α : π - θ + α
 
 	function quadratic_solve(a,b,c)
+#        if b^2 - 4 * a * c < 0
+#            @show x,y,θ
+#        end
 		return (- b + sqrt(b^2 - 4 * a * c)) / 2 / a
 	end
 

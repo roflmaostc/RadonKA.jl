@@ -1,12 +1,12 @@
 export iradon
 
-function filtered_backprojection(sinogram::AbstractArray{T, 3}, θs; backend=CPU()) where T
+function filtered_backprojection(sinogram::AbstractArray{T, 3}, θs, μ=nothing; backend=CPU()) where T
     filter = similar(sinogram, (size(sinogram, 1),))
     filter .= rr(T, (size(sinogram, 1), )) 
 
     p = plan_fft(sinogram, (1,))
     sinogram = real(inv(p) * (p * sinogram .* ifftshift(filter)))
-    return iradon(sinogram, θs, backend=backend)
+    return iradon(sinogram, θs, μ, backend=backend)
 end
 
 
@@ -40,7 +40,8 @@ function iradon(sinogram::AbstractArray{T},  θs, μ=nothing; backend=CPU()) whe
 	kernel!(I_s, sinogram_itp, θs, cc, R, μ,  ndrange=(sz[1], sz[2], sz[3]))
     
 
-    I_s ./= maximum(I_s)
+    #@show maximum(I_s)
+    #I_s ./= maximum(I_s)
 	
 	return I_s
 end
