@@ -15,10 +15,11 @@ The first two dimensions are y and x. The third dimension is z, the rotational a
 Please note: the implementation is not quite optimize for cache efficiency and 
 it is a very naive algorithm. But still, it is quite fast.
 """
-function radon(I::AbstractArray{T, 3},  θs; backend=CPU()) where T			
+function radon(I::AbstractArray{T, 3},  θs, μ=nothing; backend=CPU()) where T			
 	sz = size(I)
 	@assert sz[1] == sz[2]
     @assert iseven(sz[1]) "Array needs to have a even number along x and y"
+    @assert μ === nothing || typeof(μ) == T "Either choose μ=nothing or with a Float type being equal to $(T)"
     
 	kernel! = radon_kernel!(backend)
 
@@ -44,15 +45,14 @@ function radon(I::AbstractArray{T, 3},  θs; backend=CPU()) where T
     sinogram = similar(I, size(I, 1), length(θs), size(I, 3))
     fill!(sinogram, 0)
 	
-	kernel!(sinogram, I_itp, θs, rays_y, prop, cc, R, ndrange=(length(rays_y), length(θs), sz[3]))
+	kernel!(sinogram, I_itp, θs, rays_y, prop, cc, R, μ, ndrange=(length(rays_y), length(θs), sz[3]))
 
-    sinogram ./= maximum(sinogram)
 
 	return sinogram
 end
 
 @kernel function radon_kernel!(sinogram::AbstractArray{T}, I_itp,
-			θs, rays_y, prop, cc, R) where T
+			θs, rays_y, prop, cc, R, μ) where T
     i_rays_y, iθ, i_z = @index(Global, NTuple)
 
 	θ = θs[iθ]
@@ -69,16 +69,24 @@ end
 	#value = sinogram[round(Int, y_ray) + cc - 1 , i_z, iθ]
 
 	tmp = zero(T)
-	for i_prop = 1:round(Int, (2 * x_s) / prop[end] * length(prop))
-		prop_dist = prop[i_prop]
-		Δy = - sθ * prop_dist
-		Δx = - cθ * prop_dist
 
-		#d = distance_to_boundary(x + Δx - cc, y + Δy - cc, θ, R)
-        #@show (d," ", prop_dist, "\n")
-        #break
-		tmp += I_itp(y + Δy, x + Δx, i_z)# * exp(-T(0.02) * d)
-	end
+    if μ === nothing
+	    for i_prop = 1:round(Int, (2 * x_s) / prop[end] * length(prop))
+	    	prop_dist = prop[i_prop]
+	    	Δy = - sθ * prop_dist
+	    	Δx = - cθ * prop_dist
+	    	tmp += I_itp(y + Δy, x + Δx, i_z)
+	    end
+    else
+        for i_prop = 1:round(Int, (2 * x_s) / prop[end] * length(prop))
+	    	prop_dist = prop[i_prop]
+	    	Δy = - sθ * prop_dist
+	    	Δx = - cθ * prop_dist
+            d = abs(distance_to_boundary(x + Δx - cc, -(y + Δy - cc), θ, R))
+            h = I_itp(y + Δy, x + Δx, i_z)
+	    	tmp += h * exp(-μ * d)
+	    end
+    end
 
 	sinogram[round(Int, y_ray) + cc - 1, iθ, i_z] = tmp
 end

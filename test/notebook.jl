@@ -150,10 +150,49 @@ end
 simshow(array2[:, :, 1])
 
 # ╔═╡ 53baff4f-25a4-4659-9b08-ee0d6abf3d05
-simshow(radon(array2, [0, pi/4, pi/2, pi])[:, :, 1])
+simshow(radon(array2, [pi/2])[:, :, 1])
 
 # ╔═╡ cfc733ba-7551-4a56-b6e6-c45210439b86
 @show radon(array2, [0, pi/4, pi/2, pi])[:, :, 1]
+
+# ╔═╡ 7584e03f-2469-4d03-815a-aed5c52d8295
+simshow(array[:, :, 1])
+
+# ╔═╡ 00b91330-5aca-4c3f-9d35-3164fabaea04
+sg2 = radon(array, [pi/2, pi + pi/2, 2pi+ pi/2], 1.0)
+
+# ╔═╡ 7c75d09d-317c-4788-9df1-2644ef4d19fe
+rad2deg(2.356194490192345)
+
+# ╔═╡ ef2d6f02-4796-4597-adb8-1fe82056e179
+exp(-3)
+
+# ╔═╡ 4717a19c-d674-4ccb-9e36-dc2103e472c2
+exp(-9)
+
+# ╔═╡ c11adcd4-a478-4bd6-bb5e-fa746f1e3f69
+simshow(sg2[:, :, 1])
+
+# ╔═╡ c242d6c2-b19c-4cc1-b7dd-d54394eddfc6
+@show radon(array, range(0, pi, 8), 1.0);
+
+# ╔═╡ 08f287ca-21e9-4ffe-b21d-ec036aca39f4
+a = radon(array, [0, pi/2, pi, pi + pi/2,2pi], 1.0);
+
+# ╔═╡ f07ccb05-518d-43f2-bbdf-c2851fa1b6aa
+maximum(a, dims=1)
+
+# ╔═╡ c04e6df6-6f48-45f6-b08e-b5648aa37e70
+exp(-7)
+
+# ╔═╡ ccfd6d3d-5d11-46d4-be4b-52bc7dbd7292
+simshow(a[:, :, 1])
+
+# ╔═╡ d4772dd9-16d2-462a-8efb-16954af831aa
+simshow(array[:, :, 1])
+
+# ╔═╡ 18c39411-899a-445b-8433-b524cf395ea0
+radon(zeros((128, 128, 1)), range(0, 2pi, 300), 1.0)
 
 # ╔═╡ Cell order:
 # ╠═1f8b489e-1028-11ee-3580-150afa948930
@@ -192,3 +231,16 @@ simshow(radon(array2, [0, pi/4, pi/2, pi])[:, :, 1])
 # ╠═8ce53564-3bdf-4ab7-9ec5-cd4560fdd4be
 # ╠═53baff4f-25a4-4659-9b08-ee0d6abf3d05
 # ╠═cfc733ba-7551-4a56-b6e6-c45210439b86
+# ╠═7584e03f-2469-4d03-815a-aed5c52d8295
+# ╠═00b91330-5aca-4c3f-9d35-3164fabaea04
+# ╠═7c75d09d-317c-4788-9df1-2644ef4d19fe
+# ╠═ef2d6f02-4796-4597-adb8-1fe82056e179
+# ╠═4717a19c-d674-4ccb-9e36-dc2103e472c2
+# ╠═c11adcd4-a478-4bd6-bb5e-fa746f1e3f69
+# ╠═c242d6c2-b19c-4cc1-b7dd-d54394eddfc6
+# ╠═08f287ca-21e9-4ffe-b21d-ec036aca39f4
+# ╠═f07ccb05-518d-43f2-bbdf-c2851fa1b6aa
+# ╠═c04e6df6-6f48-45f6-b08e-b5648aa37e70
+# ╠═ccfd6d3d-5d11-46d4-be4b-52bc7dbd7292
+# ╠═d4772dd9-16d2-462a-8efb-16954af831aa
+# ╠═18c39411-899a-445b-8433-b524cf395ea0

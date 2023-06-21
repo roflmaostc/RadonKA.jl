@@ -14,6 +14,7 @@ end
 function iradon(sinogram::AbstractArray{T},  θs, μ=nothing; backend=CPU()) where T
 	sz = (size(sinogram, 1), size(sinogram, 1), size(sinogram, 3))
     @assert iseven(sz[1]) "Array needs to have a even number along x and y"
+    @assert μ === nothing || typeof(μ) == T "Either choose μ=nothing or with a Float type being equal to $(T)"
 
 	kernel! = iradon_kernel!(backend)
 
@@ -59,7 +60,7 @@ end
 	if r2 <= R^2
 		tmp = zero(T)
         
-        if μ == nothing 
+        if μ === nothing 
 		    for iθ = 1:length(θs)
 		    	θ = θs[iθ]
 		    	xn = +cos(θ) * y + x * sin(θ) + cc - 1
