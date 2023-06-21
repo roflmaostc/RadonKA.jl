@@ -58,7 +58,7 @@ end
 		for iθ = 1:length(θs)
 			θ = θs[iθ]
 			xn = +cos(θ) * y - x * sin(θ) + cc - 1#size(I_s, 1) ÷ 2 + 1
-			#d = distance_to_boundary(x, y, θ, R)
+			d = distance_to_boundary(x, y, θ, R)
 			tmp += sinogram_itp(xn, iθ, i_z)# * exp(-0.02 * d)
 		end
 

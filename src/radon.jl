@@ -71,8 +71,9 @@ end
 		Δy = - sθ * prop_dist
 		Δx = - cθ * prop_dist
 
-		#d = distance_to_boundary(x + Δx - cc, y + Δy - cc, θ, R)
-
+		d = distance_to_boundary(x + Δx - cc, y + Δy - cc, θ, R)
+        #@show (d," ", prop_dist, "\n")
+        #break
 		tmp += I_itp(y + Δy, x + Δx, i_z)# * exp(-T(0.02) * d)
 	end
 

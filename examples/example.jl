@@ -38,7 +38,7 @@ md"# Simple Image"
 
 # ╔═╡ 1c9d828d-eb69-4792-9fdb-9698939ba69f
 begin
-	img = zeros(Float32, (512, 512,10))
+	img = zeros(Float32, (512, 512, 1))
 	
 	img .+= box(img, (60,30, 300), offset=(300, 250, 10))
 	img .+= box(img, (100,300, 300), offset=(150, 250, 10))
@@ -60,7 +60,7 @@ simshow(img[:, :, depth])
 md"# Radon Transform"
 
 # ╔═╡ 937e9211-e37d-4424-82d3-7542d9ce934d
-θs = range(0f0, Float32(π), 500)
+θs = range(0f0, Float32(π), 1000)
 
 # ╔═╡ c3fa0010-b173-482d-b1f8-84683ed4927f
 @time sinogram = radon(img, θs);
@@ -84,7 +84,7 @@ md"# Iradon Transform"
 @time img_i = iradon(sinogram, θs);
 
 # ╔═╡ 38f0614a-3548-4ccb-a139-b609fac879da
-@time img_i_c = iradon(sinogram_c, θs, backend=CUDABackend());
+CUDA.@time CUDA.@sync img_i_c = iradon(sinogram_c, θs, backend=CUDABackend());
 
 # ╔═╡ ae62edef-f0fc-4467-a60c-ceaf632fb742
 0.63 / 0.003
@@ -96,7 +96,7 @@ md"# Iradon Transform"
 simshow(img_i[:, :, depth3])
 
 # ╔═╡ 74cb060f-4ed5-4c80-a9a3-5ff286f56fec
-simshow(Array(img_i_c)[:, :, depth])
+simshow(Array(img_i_c)[:, :, depth].^1)
 
 # ╔═╡ 86baebe1-f1a7-496a-98ec-f6d3ac0ab63f
 md"# Filtered Backprojection"
