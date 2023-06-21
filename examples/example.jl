@@ -38,7 +38,7 @@ md"# Simple Image"
 
 # ╔═╡ 1c9d828d-eb69-4792-9fdb-9698939ba69f
 begin
-	img = zeros(Float32, (512, 512, 1))
+	img = zeros(Float32, (768, 768, 3))
 	
 	img .+= box(img, (60,30, 300), offset=(300, 250, 10))
 	img .+= box(img, (100,300, 300), offset=(150, 250, 10))
@@ -63,13 +63,13 @@ md"# Radon Transform"
 θs = range(0f0, Float32(π), 1000)
 
 # ╔═╡ c3fa0010-b173-482d-b1f8-84683ed4927f
-@time sinogram = radon(img, θs);
+@time sinogram = radon(img, θs, 0.003f0);
 
 # ╔═╡ b79839d8-c0c7-4534-9140-ee1efc624f88
 img_c = CuArray(img);
 
 # ╔═╡ e5daf24c-c814-45bc-b00c-d0a0080ed60c
-CUDA.@time CUDA.@sync sinogram_c = radon(img_c, θs, backend=CUDABackend());
+CUDA.@time CUDA.@sync sinogram_c = radon(img_c, θs, 0.003f0, backend=CUDABackend());
 
 # ╔═╡ 4e039f6a-dfa8-4fe2-8680-2ec2646e6788
 @bind depth2 Slider(1:size(img, 3), show_value=true)
@@ -81,10 +81,10 @@ simshow(sinogram[:, :, depth2])
 md"# Iradon Transform"
 
 # ╔═╡ b39d0bed-13d5-4761-b23a-ddbe361f63ec
-@time img_i = iradon(sinogram, θs);
+@time img_i = iradon(sinogram, θs, 0.003f0);
 
 # ╔═╡ 38f0614a-3548-4ccb-a139-b609fac879da
-CUDA.@time CUDA.@sync img_i_c = iradon(sinogram_c, θs, backend=CUDABackend());
+CUDA.@time CUDA.@sync img_i_c = iradon(sinogram_c, θs, 0.003f0, backend=CUDABackend());
 
 # ╔═╡ ae62edef-f0fc-4467-a60c-ceaf632fb742
 0.63 / 0.003
@@ -96,15 +96,27 @@ CUDA.@time CUDA.@sync img_i_c = iradon(sinogram_c, θs, backend=CUDABackend());
 simshow(img_i[:, :, depth3])
 
 # ╔═╡ 74cb060f-4ed5-4c80-a9a3-5ff286f56fec
-simshow(Array(img_i_c)[:, :, depth].^1)
+simshow(Array(img_i_c)[:, :, depth])
+
+# ╔═╡ 332987aa-6003-41cc-8fb1-4bdc5e3f5ad4
+simshow(abs.(Array(img_c .- img_i_c)[:, :, depth]))
+
+# ╔═╡ 79a3fdd5-495f-4d3c-9d8b-178bce112d45
+sum(img_c)
+
+# ╔═╡ 46b14542-9b25-40cc-9ad9-0568a9bed6de
+sum(img_i_c) / 768 / 768 * π /4
 
 # ╔═╡ 86baebe1-f1a7-496a-98ec-f6d3ac0ab63f
 md"# Filtered Backprojection"
 
 # ╔═╡ 449de2b7-c8db-4d6e-a4fb-2ac82b218cc4
-CUDA.@time CUDA.@sync img_filtered_c = RadonKA.filtered_backprojection(sinogram_c, θs, backend=CUDABackend());
+img_filtered_c = RadonKA.filtered_backprojection(sinogram_c, θs, backend=CUDABackend());
 
 # ╔═╡ 1c742967-7b6c-4ad8-b4ea-dcb6bb2774ef
+simshow(Array(img_filtered_c)[:, :, depth3])
+
+# ╔═╡ 90467d6e-acbb-450f-82fe-9f46096d1b0a
 simshow(Array(img_filtered_c)[:, :, depth3])
 
 # ╔═╡ Cell order:
@@ -130,6 +142,10 @@ simshow(Array(img_filtered_c)[:, :, depth3])
 # ╠═ac354458-b688-4ba8-9425-36fbd835a3ec
 # ╠═3c560485-9479-422e-a064-b5fe7ae3fcc7
 # ╠═74cb060f-4ed5-4c80-a9a3-5ff286f56fec
+# ╠═332987aa-6003-41cc-8fb1-4bdc5e3f5ad4
+# ╠═79a3fdd5-495f-4d3c-9d8b-178bce112d45
+# ╠═46b14542-9b25-40cc-9ad9-0568a9bed6de
 # ╟─86baebe1-f1a7-496a-98ec-f6d3ac0ab63f
 # ╠═449de2b7-c8db-4d6e-a4fb-2ac82b218cc4
 # ╠═1c742967-7b6c-4ad8-b4ea-dcb6bb2774ef
+# ╠═90467d6e-acbb-450f-82fe-9f46096d1b0a
