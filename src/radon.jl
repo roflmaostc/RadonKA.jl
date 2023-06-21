@@ -18,7 +18,8 @@ it is a very naive algorithm. But still, it is quite fast.
 function radon(I::AbstractArray{T, 3},  θs; backend=CPU()) where T			
 	sz = size(I)
 	@assert sz[1] == sz[2]
-
+    @assert iseven(sz[1]) "Array needs to have a even number along x and y"
+    
 	kernel! = radon_kernel!(backend)
 
 	I_itp = let
@@ -44,7 +45,9 @@ function radon(I::AbstractArray{T, 3},  θs; backend=CPU()) where T
     fill!(sinogram, 0)
 	
 	kernel!(sinogram, I_itp, θs, rays_y, prop, cc, R, ndrange=(length(rays_y), length(θs), sz[3]))
-	
+
+    sinogram ./= maximum(sinogram)
+
 	return sinogram
 end
 
@@ -53,7 +56,7 @@ end
     i_rays_y, iθ, i_z = @index(Global, NTuple)
 
 	θ = θs[iθ]
-	sθ = sin(θ)
+	sθ = -sin(θ)
 	cθ = cos(θ)
 
 	y_ray = rays_y[i_rays_y]
@@ -71,7 +74,7 @@ end
 		Δy = - sθ * prop_dist
 		Δx = - cθ * prop_dist
 
-		d = distance_to_boundary(x + Δx - cc, y + Δy - cc, θ, R)
+		#d = distance_to_boundary(x + Δx - cc, y + Δy - cc, θ, R)
         #@show (d," ", prop_dist, "\n")
         #break
 		tmp += I_itp(y + Δy, x + Δx, i_z)# * exp(-T(0.02) * d)
