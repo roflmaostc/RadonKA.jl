@@ -64,7 +64,7 @@ end
         if μ === nothing 
 		    for iθ = 1:length(θs)
 		    	θ = θs[iθ]
-		    	xn = +cos(θ) * y + x * sin(θ) + cc - 1
+		    	xn = +cos(θ) * y + x * sin(θ) + cc - 1# - 1
 		    	tmp += sinogram_itp(xn, iθ, i_z)
 		    end
         else
