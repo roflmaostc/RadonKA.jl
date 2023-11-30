@@ -36,10 +36,13 @@ md"# Example Image"
 # ╔═╡ 54208d78-cf55-41d7-b4bf-6d1ab4927bbb
 begin
 	N = 320
-	N_z = 100
-	img = box(Float32, (N, N, N_z), (N ÷4, N ÷ 4, 20), offset=(N ÷ 2 + 50, N ÷ 2 -100, N_z ÷ 2)) |> collect
+	N_z = 1
+	#img = box(Float32, (N, N, N_z), (N ÷4, N ÷ 4, 20), offset=(N ÷ 2 + 60, N ÷ 2 -50, N_z ÷ 2)) |> collect
+
+	#img = box(Float32, (N, N, N_z), (1, 1, 1)) |> collect
+	img = box(Float32, (N, N, N_z), (N ÷4, N ÷ 4, 20), offset=(N ÷ 2 - 50, N ÷ 2 + 50, N_z ÷ 2)) |> collect
 	
-	img .+= 0.0f0 .+ (rr2(Float32, (N, N, N_z)) .< 100 .^2)
+	#img .+= 0.0f0 .+ (rr2(Float32, (N, N, N_z)) .< 100 .^2)
 
 	#img = box(Float32, (100, 100), (3, 3), offset=(51, 51)) |> collect
 end;
@@ -51,7 +54,7 @@ img_c = CuArray(img);
 md"# Radon Transform"
 
 # ╔═╡ b8618268-0892-4abc-ae26-e25e41d07968
-angles = range(0f0, 2f0π, 360)
+angles = range(0f0, 2f0π, 361)
 
 # ╔═╡ d2cc6fc6-135b-4c4a-8453-9c5bf9e4a24f
 @time sinogram = radon(img, angles);
@@ -81,27 +84,60 @@ size(sinogram)
 # ╔═╡ edbf1577-0fd4-4261-bd04-499bc1a0debd
 md"# IRadon Transform"
 
+# ╔═╡ 61f17d9e-ed0a-4176-9466-464527c1b10e
+@bind angle_cut1 Slider(1:361, show_value=true)
+
+# ╔═╡ 7bbc33af-7082-42e4-ad5f-1d4273e87fbf
+rad2deg.(Float32.(angles))
+
+# ╔═╡ 7d08ba55-4490-400f-8497-5cbfb3f257c7
+@bind angle_cut2 Slider(angle_cut1:361, show_value=true)
+
 # ╔═╡ ed54c930-4f34-4f3d-9180-514dc59fde15
-@time backproject = iradon(sinogram, angles);
+@time backproject = iradon(sinogram[:, angle_cut1:angle_cut2, :], angles[angle_cut1:angle_cut2]);
 
 # ╔═╡ 037e9d64-505e-40f9-b710-20f57d29bd17
-CUDA.@time CUDA.@sync backproject_c = iradon(sinogram_c, CuArray(angles),
+# ╠═╡ disabled = true
+#=╠═╡
+#CUDA.@time CUDA.@sync backproject_c = iradon(sinogram_c, CuArray(angles),
 											 backend=CUDABackend());
+  ╠═╡ =#
 
 # ╔═╡ 72d63cbe-67d6-4a9c-80fa-d22743709105
 @bind i_z2 Slider(1:size(sinogram, 3), show_value=true)
 
 # ╔═╡ 365ee0e7-3545-4345-8b0c-8338a59c53b3
-simshow(backproject[:, :, i_z2])
+simshow(backproject[:, :, i_z2] .+ 0 .* img[:, :, i_z2])
+
+# ╔═╡ 4c5038bd-d346-4070-822b-bc3e5331d99c
+begin
+	plot(backproject[2, :, i_z2])
+	plot!(vcat([0.0], sinogram[:, 91, i_z2]))
+	plot!(vcat([0.0], sinogram[:, 1, i_z2]))
+
+end
+
+# ╔═╡ 3c85e03a-a126-40f7-bcc2-0e928190f757
+vcat([0.0], sinogram[:, 1, i_z2])
 
 # ╔═╡ b06bb885-175c-4cac-8346-f69f7172a9aa
 simshow(Array(backproject_c[:, :, i_z2]))
+
+# ╔═╡ 30f1016a-5b66-48ec-93f5-8c1f1129207e
+Revise.errors()
 
 # ╔═╡ 447b163b-cc06-4427-b734-e0498df35260
 sum(backproject)
 
 # ╔═╡ 267d7684-4a1b-402d-96ae-c3e26b957e0b
 sum(backproject_c)
+
+# ╔═╡ ec342e4e-4ce2-4d26-91f8-4d06a4fad46e
+begin
+	arr = zeros(2,2)
+	arr[1,1] = 1
+	simshow(arr)
+end
 
 # ╔═╡ Cell order:
 # ╠═4eb3148e-8f8b-11ee-3cfe-854d3bd5cc80
@@ -121,11 +157,18 @@ sum(backproject_c)
 # ╠═1a931e03-6a29-4c3e-b66f-bc1b5936a6f4
 # ╠═3d584d94-b88f-4738-a470-7db1fb3fb996
 # ╠═375a0179-8592-4d02-9686-d6a85a3eb048
-# ╠═edbf1577-0fd4-4261-bd04-499bc1a0debd
+# ╟─edbf1577-0fd4-4261-bd04-499bc1a0debd
+# ╠═61f17d9e-ed0a-4176-9466-464527c1b10e
+# ╠═7bbc33af-7082-42e4-ad5f-1d4273e87fbf
+# ╠═7d08ba55-4490-400f-8497-5cbfb3f257c7
 # ╠═ed54c930-4f34-4f3d-9180-514dc59fde15
 # ╠═037e9d64-505e-40f9-b710-20f57d29bd17
 # ╠═72d63cbe-67d6-4a9c-80fa-d22743709105
 # ╠═365ee0e7-3545-4345-8b0c-8338a59c53b3
+# ╠═4c5038bd-d346-4070-822b-bc3e5331d99c
+# ╠═3c85e03a-a126-40f7-bcc2-0e928190f757
 # ╠═b06bb885-175c-4cac-8346-f69f7172a9aa
+# ╠═30f1016a-5b66-48ec-93f5-8c1f1129207e
 # ╠═447b163b-cc06-4427-b734-e0498df35260
 # ╠═267d7684-4a1b-402d-96ae-c3e26b957e0b
+# ╠═ec342e4e-4ce2-4d26-91f8-4d06a4fad46e
