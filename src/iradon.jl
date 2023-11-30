@@ -19,7 +19,7 @@ function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 	N_angles = size(angles, 1)
 
     # the only significant allocation
-	img = similar(sinogram, (N + 1, N_angles, size(sinogram, 3)))
+	img = similar(sinogram, (N + 1, N + 1, size(sinogram, 3)))
 	fill!(img, 0)
 
     # radius of the cylinder we are projecting through
