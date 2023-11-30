@@ -51,7 +51,7 @@ end
     # i_z is the index for the z dimension
 	i_i, i_j, i_z = @index(Global, NTuple)
 
-    if (i_i - mid)^2 + (i_j - mid)^2 ≥ radius^2
+    if (i_i - mid)^2 + (i_j - mid)^2 > radius^2
     
     else
 	    l = 1
@@ -66,9 +66,9 @@ end
                 contact_y = -cos(angle)
                 dir_x = cos(angle)
                 dir_y = sin(angle)
-                if 0 ≤ angle < π / 2 
+                if 0 ≤ angle < π
                     y_intersect = mid + floor(Int, (dir_x * (i_i - mid - contact_x * radius) + dir_y * (i_j - mid - contact_y * radius)))
-                elseif π/2 ≤ angle
+                elseif π <= angle
                     y_intersect = mid + floor(Int, (dir_x * (i_i - mid - contact_x * radius) + dir_y * (i_j - mid - contact_y * radius)))
                 end
 
@@ -76,7 +76,7 @@ end
 
             tmp += sinogram[y_intersect, i_angle, i_z] 
 	    end
-        img[1 + i_j, 1 + i_i, i_z] = tmp
+        img[i_j,i_i, i_z] = tmp
     end
 end
 

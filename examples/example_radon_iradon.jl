@@ -39,8 +39,8 @@ begin
 	N_z = 1
 	#img = box(Float32, (N, N, N_z), (N ÷4, N ÷ 4, 20), offset=(N ÷ 2 + 60, N ÷ 2 -50, N_z ÷ 2)) |> collect
 
-	#img = box(Float32, (N, N, N_z), (1, 1, 1)) |> collect
-	img = box(Float32, (N, N, N_z), (N ÷4, N ÷ 4, 20), offset=(N ÷ 2 - 50, N ÷ 2 + 50, N_z ÷ 2)) |> collect
+	img = box(Float32, (N, N, N_z), (1, 1, 1)) |> collect
+	#img = box(Float32, (N, N, N_z), (N ÷2, N ÷ 2, 20), offset=(N ÷ 2 - 50, N ÷ 2 + 50, N_z ÷ 2)) |> collect
 	
 	#img .+= 0.0f0 .+ (rr2(Float32, (N, N, N_z)) .< 100 .^2)
 
@@ -111,9 +111,9 @@ simshow(backproject[:, :, i_z2] .+ 0 .* img[:, :, i_z2])
 
 # ╔═╡ 4c5038bd-d346-4070-822b-bc3e5331d99c
 begin
-	plot(backproject[2, :, i_z2])
-	plot!(vcat([0.0], sinogram[:, 91, i_z2]))
-	plot!(vcat([0.0], sinogram[:, 1, i_z2]))
+	plot(backproject[end, :, i_z2])
+	#plot!(vcat([0.0], sinogram[:, 91, i_z2]))
+	#plot!(vcat([0.0], sinogram[:, 1, i_z2]))
 
 end
 
