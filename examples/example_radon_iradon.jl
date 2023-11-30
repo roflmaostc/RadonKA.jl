@@ -75,14 +75,33 @@ simshow(sinogram[:, :, i_z])
 # ╔═╡ 3d584d94-b88f-4738-a470-7db1fb3fb996
 simshow(Array(sinogram_c[:, :, i_z]))
 
+# ╔═╡ 375a0179-8592-4d02-9686-d6a85a3eb048
+size(sinogram)
+
 # ╔═╡ edbf1577-0fd4-4261-bd04-499bc1a0debd
 md"# IRadon Transform"
 
 # ╔═╡ ed54c930-4f34-4f3d-9180-514dc59fde15
+@time backproject = iradon(sinogram, angles);
 
+# ╔═╡ 037e9d64-505e-40f9-b710-20f57d29bd17
+CUDA.@time CUDA.@sync backproject_c = iradon(sinogram_c, CuArray(angles),
+											 backend=CUDABackend());
+
+# ╔═╡ 72d63cbe-67d6-4a9c-80fa-d22743709105
+@bind i_z2 Slider(1:size(sinogram, 3), show_value=true)
 
 # ╔═╡ 365ee0e7-3545-4345-8b0c-8338a59c53b3
+simshow(backproject[:, :, i_z2])
 
+# ╔═╡ b06bb885-175c-4cac-8346-f69f7172a9aa
+simshow(Array(backproject_c[:, :, i_z2]))
+
+# ╔═╡ 447b163b-cc06-4427-b734-e0498df35260
+sum(backproject)
+
+# ╔═╡ 267d7684-4a1b-402d-96ae-c3e26b957e0b
+sum(backproject_c)
 
 # ╔═╡ Cell order:
 # ╠═4eb3148e-8f8b-11ee-3cfe-854d3bd5cc80
@@ -97,10 +116,16 @@ md"# IRadon Transform"
 # ╠═b8618268-0892-4abc-ae26-e25e41d07968
 # ╠═d2cc6fc6-135b-4c4a-8453-9c5bf9e4a24f
 # ╠═dc14103d-993c-402f-a8b5-a35843f3f4ac
-# ╟─783f05e0-2640-4ecd-8c19-1c15a99ee294
+# ╠═783f05e0-2640-4ecd-8c19-1c15a99ee294
 # ╠═db2676fd-3305-408f-93b4-08a3d04fdd02
 # ╠═1a931e03-6a29-4c3e-b66f-bc1b5936a6f4
 # ╠═3d584d94-b88f-4738-a470-7db1fb3fb996
+# ╠═375a0179-8592-4d02-9686-d6a85a3eb048
 # ╠═edbf1577-0fd4-4261-bd04-499bc1a0debd
 # ╠═ed54c930-4f34-4f3d-9180-514dc59fde15
+# ╠═037e9d64-505e-40f9-b710-20f57d29bd17
+# ╠═72d63cbe-67d6-4a9c-80fa-d22743709105
 # ╠═365ee0e7-3545-4345-8b0c-8338a59c53b3
+# ╠═b06bb885-175c-4cac-8346-f69f7172a9aa
+# ╠═447b163b-cc06-4427-b734-e0498df35260
+# ╠═267d7684-4a1b-402d-96ae-c3e26b957e0b

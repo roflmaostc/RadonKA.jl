@@ -4,30 +4,23 @@ export iradon
 
 
 """
-    radon(I, θs; backend=CPU())
-
-Calculates the parallel radon transform of the three dimensional AbstractArray `I`.
-The first two dimensions are y and x. The third dimension is z, the rotational axis.
-
-`θs` is a vector or range storing the angles in radians.
+    iradon(sinogram, θs; backend=CPU())
 
 `backend` can be either `CPU()` for multithreaded CPU execution or
 `CUDABackend()` for CUDA execution. 
 
 
-Please note: the implementation is not quite optimize for cache efficiency and 
-it is a very naive algorithm. But still, it is quite fast.
 """
-function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
-			   backend=CPU()) where T
-	@assert iseven(size(img, 1)) && iseven(size(img, 2))
+function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
+			    backend=CPU()) where T
+    #@assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
     # this is the actual size we are using for calculation
-	N = size(img, 1) - 1
+	N = size(sinogram, 1)
 	N_angles = size(angles, 1)
 
     # the only significant allocation
-	sinogram = similar(img, (N, N_angles, size(img, 3)))
-	fill!(sinogram, 0)
+	img = similar(sinogram, (N + 1, N_angles, size(sinogram, 3)))
+	fill!(img, 0)
 
     # radius of the cylinder we are projecting through
 	radius = size(img, 1) ÷ 2 - 1
@@ -39,19 +32,19 @@ function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 	y_dists .= -radius:radius
 
 	#@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
-	kernel! = radon_kernel!(backend)
+	kernel! = iradon_kernel!(backend)
 	kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
-					ndrange=(N_angles,N, size(img, 3)))
+					ndrange=(N_angles, N, size(img, 3)))
 	
-	return sinogram
+	return img 
 end
 
 """
-    radon_kernel!(sinogram, img,
+    iradon_kernel!(sinogram, img,
                   y_dists, angles, mid, radius)
 
 """
-@kernel function radon_kernel!(sinogram::AbstractArray{T},
+@kernel function iradon_kernel!(sinogram::AbstractArray{T},
 			img, y_dists, angles, mid, radius) where T
     # r is the index of the angles
     # k is the index of the detector spatial coordinate
@@ -91,9 +84,8 @@ end
 		distance = sqrt((a_old - a) ^2 +
 						(b_old - b) ^2)
         # cell value times distance travelled through
-		@inbounds tmp += distance * img[cell_i, cell_j, i_z]
+        @inbounds img[cell_i, cell_j, i_z] += distance * sinogram[k, r, i_z] 
 	end
-	@inbounds sinogram[k, r, i_z] = tmp
 end
 
 
