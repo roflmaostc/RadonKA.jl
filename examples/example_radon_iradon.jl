@@ -21,20 +21,14 @@ begin
 	using Revise
 end
 
+# ╔═╡ b336e55e-0be4-422f-b48a-0a2242cb0915
+using RadonKA
+
 # ╔═╡ 1311e853-c4cd-42bb-8bf3-5e0d564bf9c5
 using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest
 
 # ╔═╡ 03bccb92-b47f-477a-9bdb-74cc404da690
 using KernelAbstractions, CUDA, CUDA.CUDAKernels
-
-# ╔═╡ b336e55e-0be4-422f-b48a-0a2242cb0915
-using RadonKA
-
-# ╔═╡ 4ee97893-5e8f-42cf-9ecd-c63c9db76869
-# ╠═╡ disabled = true
-#=╠═╡
-using RadonKA
-  ╠═╡ =#
 
 # ╔═╡ d25c1381-baf1-429b-8150-622b8f731d83
 md"# Example Image"
@@ -152,7 +146,10 @@ end
 @time backproject2 = RadonKA.iradon2(sinogram, angles);
 
 # ╔═╡ 93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
-CUDA.@time CUDA.@sync backproject2_cu = RadonKA.iradon2(sinogram_c[:, 1:2, :], CuArray(angles[1:2]), backend=CUDABackend());
+CUDA.@time CUDA.@sync backproject2_cu = RadonKA.iradon2(sinogram_c[:, :, :], CuArray(angles[:]), backend=CUDABackend());
+
+# ╔═╡ a29be556-174a-4ec5-962d-9fdf203d51aa
+
 
 # ╔═╡ 52a86ed8-4504-4d9e-9ea6-6aeaf8540406
 @bind i_z3 Slider(1:size(sinogram, 3), show_value=true)
@@ -165,7 +162,7 @@ Revise.errors()
 
 # ╔═╡ Cell order:
 # ╠═4eb3148e-8f8b-11ee-3cfe-854d3bd5cc80
-# ╠═4ee97893-5e8f-42cf-9ecd-c63c9db76869
+# ╠═b336e55e-0be4-422f-b48a-0a2242cb0915
 # ╠═1311e853-c4cd-42bb-8bf3-5e0d564bf9c5
 # ╠═03bccb92-b47f-477a-9bdb-74cc404da690
 # ╟─d25c1381-baf1-429b-8150-622b8f731d83
@@ -199,7 +196,7 @@ Revise.errors()
 # ╠═e24bb409-bd5d-4eca-8cdc-884daece26fa
 # ╠═7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
 # ╠═93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
-# ╠═52a86ed8-4504-4d9e-9ea6-6aeaf8540406
+# ╠═a29be556-174a-4ec5-962d-9fdf203d51aa
+# ╟─52a86ed8-4504-4d9e-9ea6-6aeaf8540406
 # ╠═9d7c41db-adb5-4da2-98ae-96e967c1056e
 # ╠═c9b84c39-7a74-4893-bbb6-5241a121df04
-# ╠═b336e55e-0be4-422f-b48a-0a2242cb0915
