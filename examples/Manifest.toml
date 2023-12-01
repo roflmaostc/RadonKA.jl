@@ -2,7 +2,7 @@
 
 julia_version = "1.9.4"
 manifest_format = "2.0"
-project_hash = "93a2cea19f4df08f72fc7e57574ea1e89cd4ad22"
+project_hash = "299b3be6422f1603b5efe6219b0baa42967a5831"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1105,7 +1105,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.RadonKA]]
-deps = ["Adapt", "CUDA", "FFTW", "IndexFunArrays", "KernelAbstractions"]
+deps = ["Adapt", "Atomix", "CUDA", "FFTW", "IndexFunArrays", "KernelAbstractions"]
 path = ".."
 uuid = "86de8297-835b-47df-b249-c04e8db91db5"
 version = "0.1.0"

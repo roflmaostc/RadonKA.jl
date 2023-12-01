@@ -21,14 +21,20 @@ begin
 	using Revise
 end
 
-# ╔═╡ 4ee97893-5e8f-42cf-9ecd-c63c9db76869
-using RadonKA
-
 # ╔═╡ 1311e853-c4cd-42bb-8bf3-5e0d564bf9c5
 using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest
 
 # ╔═╡ 03bccb92-b47f-477a-9bdb-74cc404da690
 using KernelAbstractions, CUDA, CUDA.CUDAKernels
+
+# ╔═╡ b336e55e-0be4-422f-b48a-0a2242cb0915
+using RadonKA
+
+# ╔═╡ 4ee97893-5e8f-42cf-9ecd-c63c9db76869
+# ╠═╡ disabled = true
+#=╠═╡
+using RadonKA
+  ╠═╡ =#
 
 # ╔═╡ d25c1381-baf1-429b-8150-622b8f731d83
 md"# Example Image"
@@ -36,13 +42,13 @@ md"# Example Image"
 # ╔═╡ 54208d78-cf55-41d7-b4bf-6d1ab4927bbb
 begin
 	N = 320
-	N_z = 1
+	N_z = 100
 	#img = box(Float32, (N, N, N_z), (N ÷4, N ÷ 4, 20), offset=(N ÷ 2 + 60, N ÷ 2 -50, N_z ÷ 2)) |> collect
 
-	img = box(Float32, (N, N, N_z), (1, 1, 1)) |> collect
-	#img = box(Float32, (N, N, N_z), (N ÷2, N ÷ 2, 20), offset=(N ÷ 2 - 50, N ÷ 2 + 50, N_z ÷ 2)) |> collect
+	#img = box(Float32, (N, N, N_z), (1, 1, 1)) |> collect
+	img = box(Float32, (N, N, N_z), (N ÷2, N ÷ 2, 50), offset=(N ÷ 2 - 50, N ÷ 2 + 50, N_z ÷ 2)) |> collect
 	
-	#img .+= 0.0f0 .+ (rr2(Float32, (N, N, N_z)) .< 100 .^2)
+	img .+= 0.0f0 .+ (rr2(Float32, (N, N, N_z)) .< 100 .^2)
 
 	#img = box(Float32, (100, 100), (3, 3), offset=(51, 51)) |> collect
 end;
@@ -139,6 +145,24 @@ begin
 	simshow(arr)
 end
 
+# ╔═╡ e24bb409-bd5d-4eca-8cdc-884daece26fa
+
+
+# ╔═╡ 7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
+@time backproject2 = RadonKA.iradon2(sinogram, angles);
+
+# ╔═╡ 93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
+CUDA.@time CUDA.@sync backproject2_cu = RadonKA.iradon2(sinogram_c[:, 1:2, :], CuArray(angles[1:2]), backend=CUDABackend());
+
+# ╔═╡ 52a86ed8-4504-4d9e-9ea6-6aeaf8540406
+@bind i_z3 Slider(1:size(sinogram, 3), show_value=true)
+
+# ╔═╡ 9d7c41db-adb5-4da2-98ae-96e967c1056e
+simshow(Array(backproject2_cu[:, :, i_z3]))
+
+# ╔═╡ c9b84c39-7a74-4893-bbb6-5241a121df04
+Revise.errors()
+
 # ╔═╡ Cell order:
 # ╠═4eb3148e-8f8b-11ee-3cfe-854d3bd5cc80
 # ╠═4ee97893-5e8f-42cf-9ecd-c63c9db76869
@@ -172,3 +196,10 @@ end
 # ╠═447b163b-cc06-4427-b734-e0498df35260
 # ╠═267d7684-4a1b-402d-96ae-c3e26b957e0b
 # ╠═ec342e4e-4ce2-4d26-91f8-4d06a4fad46e
+# ╠═e24bb409-bd5d-4eca-8cdc-884daece26fa
+# ╠═7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
+# ╠═93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
+# ╠═52a86ed8-4504-4d9e-9ea6-6aeaf8540406
+# ╠═9d7c41db-adb5-4da2-98ae-96e967c1056e
+# ╠═c9b84c39-7a74-4893-bbb6-5241a121df04
+# ╠═b336e55e-0be4-422f-b48a-0a2242cb0915
