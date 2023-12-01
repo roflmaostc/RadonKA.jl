@@ -36,7 +36,7 @@ function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 	#@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
 	kernel! = iradon_kernel!(backend)
 	kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
-					ndrange=(N_angles, N, size(img, 3)))
+					ndrange=(N, N_angles, size(img, 3)))
 
 	return img
 end
@@ -51,7 +51,7 @@ end
     # r is the index of the angles
     # k is the index of the detector spatial coordinate
     # i_z is the index for the z dimension
-	r, k, i_z = @index(Global, NTuple)
+	k, r, i_z = @index(Global, NTuple)
 
 	angle = angles[r]
 	sinα, cosα = sincos(angle)

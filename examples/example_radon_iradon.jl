@@ -30,13 +30,16 @@ using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest
 # ╔═╡ 03bccb92-b47f-477a-9bdb-74cc404da690
 using KernelAbstractions, CUDA, CUDA.CUDAKernels
 
+# ╔═╡ 810aebe4-2c6e-4ba6-916b-9e4306df33c9
+TableOfContents()
+
 # ╔═╡ d25c1381-baf1-429b-8150-622b8f731d83
 md"# Example Image"
 
 # ╔═╡ 54208d78-cf55-41d7-b4bf-6d1ab4927bbb
 begin
-	N = 320
-	N_z = 100
+	N = 512
+	N_z = 20
 	img = box(Float32, (N, N, N_z), (N ÷4, N ÷ 4, 20), offset=(N ÷ 2 + 60, N ÷ 2 -50, N_z ÷ 2)) |> collect
 
 	#img = box(Float32, (N, N, N_z), (1, 1, 1)) |> collect
@@ -56,11 +59,14 @@ md"# Radon Transform"
 # ╔═╡ b8618268-0892-4abc-ae26-e25e41d07968
 angles = range(0f0, 2f0π, 361)[begin:end-1]
 
+# ╔═╡ 135e728b-efd8-44bc-81d9-6a2244ce4c31
+angles_c = CuArray(angles);
+
 # ╔═╡ d2cc6fc6-135b-4c4a-8453-9c5bf9e4a24f
 @time sinogram = radon(img, angles);
 
 # ╔═╡ dc14103d-993c-402f-a8b5-a35843f3f4ac
-CUDA.@time CUDA.@sync sinogram_c = radon(img_c, CuArray(angles),
+CUDA.@time CUDA.@sync sinogram_c = radon(img_c, angles_c,
 										 backend=CUDABackend());
 
 # ╔═╡ 783f05e0-2640-4ecd-8c19-1c15a99ee294
@@ -78,9 +84,6 @@ simshow(sinogram[:, :, i_z])
 # ╔═╡ 3d584d94-b88f-4738-a470-7db1fb3fb996
 simshow(Array(sinogram_c[:, :, i_z]))
 
-# ╔═╡ 375a0179-8592-4d02-9686-d6a85a3eb048
-size(sinogram)
-
 # ╔═╡ edbf1577-0fd4-4261-bd04-499bc1a0debd
 md"# IRadon Transform"
 
@@ -94,7 +97,7 @@ rad2deg(angles[90])
 @bind angle_limit Slider(1:size(sinogram, 2), show_value=true)
 
 # ╔═╡ 93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
-CUDA.@sync backproject_cu = RadonKA.iradon(sinogram_c[:, begin:angle_limit, :], CuArray(angles[begin:angle_limit]), backend=CUDABackend());
+CUDA.@time CUDA.@sync backproject_cu = RadonKA.iradon(sinogram_c[:, begin:angle_limit, :], CuArray(angles[begin:angle_limit]), backend=CUDABackend());
 
 # ╔═╡ 52a86ed8-4504-4d9e-9ea6-6aeaf8540406
 @bind i_z3 Slider(1:size(sinogram, 3), show_value=true)
@@ -122,28 +125,29 @@ backproject ≈ Array(backproject_cu)
 # ╠═b336e55e-0be4-422f-b48a-0a2242cb0915
 # ╠═1311e853-c4cd-42bb-8bf3-5e0d564bf9c5
 # ╠═03bccb92-b47f-477a-9bdb-74cc404da690
+# ╟─810aebe4-2c6e-4ba6-916b-9e4306df33c9
 # ╟─d25c1381-baf1-429b-8150-622b8f731d83
 # ╠═54208d78-cf55-41d7-b4bf-6d1ab4927bbb
 # ╠═1393d029-66be-40aa-a2f9-f31317222575
 # ╠═01b4b8f8-37d5-425f-975e-ebb3890d8624
 # ╟─8be220a4-293d-411d-bbce-e39b64780814
 # ╠═b8618268-0892-4abc-ae26-e25e41d07968
+# ╠═135e728b-efd8-44bc-81d9-6a2244ce4c31
 # ╠═d2cc6fc6-135b-4c4a-8453-9c5bf9e4a24f
 # ╠═dc14103d-993c-402f-a8b5-a35843f3f4ac
 # ╠═783f05e0-2640-4ecd-8c19-1c15a99ee294
 # ╠═db2676fd-3305-408f-93b4-08a3d04fdd02
 # ╠═1a931e03-6a29-4c3e-b66f-bc1b5936a6f4
 # ╠═3d584d94-b88f-4738-a470-7db1fb3fb996
-# ╠═375a0179-8592-4d02-9686-d6a85a3eb048
 # ╟─edbf1577-0fd4-4261-bd04-499bc1a0debd
 # ╠═7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
 # ╠═0d2ccb21-a041-4fc4-b8b8-6bdc543e89e6
-# ╠═b9bf49a0-7320-4269-9a6a-ac2533ab5fde
+# ╟─b9bf49a0-7320-4269-9a6a-ac2533ab5fde
 # ╠═93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
 # ╠═52a86ed8-4504-4d9e-9ea6-6aeaf8540406
 # ╠═9d7c41db-adb5-4da2-98ae-96e967c1056e
 # ╟─81b07387-ede6-4a66-8260-8605cd978ede
 # ╠═32b15077-5e09-4693-8f12-3b2029fe63cc
-# ╠═bc6e2d40-fcd1-4d7b-8f96-3d4d9e4336de
+# ╟─bc6e2d40-fcd1-4d7b-8f96-3d4d9e4336de
 # ╠═eee184e3-8d5d-42fb-81fb-a5d7e59a083a
 # ╠═a29be556-174a-4ec5-962d-9fdf203d51aa
