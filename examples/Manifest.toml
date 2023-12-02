@@ -1105,7 +1105,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.RadonKA]]
-deps = ["Adapt", "Atomix", "CUDA", "FFTW", "IndexFunArrays", "KernelAbstractions"]
+deps = ["Adapt", "Atomix", "FFTW", "IndexFunArrays", "KernelAbstractions"]
 path = ".."
 uuid = "86de8297-835b-47df-b249-c04e8db91db5"
 version = "0.1.0"

@@ -1,23 +1,32 @@
 export radon
 
+
+
 radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
     radon(img, T.(angles); backend)
 
+# handle 2D
+radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
+    view(radon(reshape(img, (size(img)..., 1)), angles; backend), :, :, 1)
 
 """
     radon(I, θs; backend=CPU())
 
-Calculates the parallel radon transform of the three dimensional AbstractArray `I`.
+Calculates the parallel Radon transform of the three dimensional AbstractArray `I`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
+Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
 
 `θs` is a vector or range storing the angles in radians.
 
 `backend` can be either `CPU()` for multithreaded CPU execution or
-`CUDABackend()` for CUDA execution. 
+`CUDABackend()` for CUDA execution. In principle, all backends of KernelAbstractions.jl should work
+but are not tested
 
 
-Please note: the implementation is not quite optimize for cache efficiency and 
-it is a very naive algorithm. But still, it is quite fast.
+Please note: the implementation is not quite optimized for cache efficiency and 
+it is a very naive algorithm. But still, it is fast!
+
+See also [`iradon`](@ref).
 """
 function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 			   backend=CPU()) where T

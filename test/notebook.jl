@@ -54,23 +54,8 @@ begin
 	img[8,5, 1] = 1
 end
 
-# ╔═╡ e272e8e5-a294-47b2-a012-192c31179a4a
-angles2 = range(0, π, 100)
-
 # ╔═╡ 1615a095-dbfb-4319-87e6-35a950ac4fe7
 simshow(img[:, :, 1])
-
-# ╔═╡ d661d92c-c11b-429f-8666-56a217da4776
-sinogram2 = radon(img, angles2)
-
-# ╔═╡ 26ccc58c-00e8-4d57-bc74-de6a3a544ab8
-simshow(sinogram2[:,:,1])
-
-# ╔═╡ 2a3fe939-77b0-4388-9b9e-f9bee9e35e1b
-I_2 = iradon(sinogram2, angles2);
-
-# ╔═╡ a33c5c99-00c3-437d-bfa7-2c0d12fb2339
-simshow(I_2[:,:,1])
 
 # ╔═╡ 2435a78b-5142-483e-afaf-6091b78724a5
 begin
@@ -152,20 +137,29 @@ simshow(sg[:, :, 1])
 ≈(sg, theory, rtol=0.4)
 
 # ╔═╡ 937726a1-64af-4fac-8d86-d115533183a0
+# ╠═╡ disabled = true
+#=╠═╡
 begin
 	array2 = zeros((16, 16,1))
 	array2[12,9] = 1
 	array2[12, 12] = 1
 end
+  ╠═╡ =#
 
 # ╔═╡ 8ce53564-3bdf-4ab7-9ec5-cd4560fdd4be
+#=╠═╡
 simshow(array2[:, :, 1])
+  ╠═╡ =#
 
 # ╔═╡ 53baff4f-25a4-4659-9b08-ee0d6abf3d05
+#=╠═╡
 simshow(radon(array2, [pi/2])[:, :, 1])
+  ╠═╡ =#
 
 # ╔═╡ cfc733ba-7551-4a56-b6e6-c45210439b86
+#=╠═╡
 @show radon(array2, [0, pi/4, pi/2, pi])[:, :, 1]
+  ╠═╡ =#
 
 # ╔═╡ 7584e03f-2469-4d03-815a-aed5c52d8295
 simshow(array[:, :, 1])
@@ -191,6 +185,9 @@ simshow(sg2[:, :, 1])
 # ╔═╡ 08f287ca-21e9-4ffe-b21d-ec036aca39f4
 a = radon(array, [0, pi/2, pi, pi + pi/2,2pi]);
 
+# ╔═╡ 4a580750-d9ed-46a6-92a7-6066f4aebbab
+
+
 # ╔═╡ f07ccb05-518d-43f2-bbdf-c2851fa1b6aa
 maximum(a, dims=1)
 
@@ -205,6 +202,84 @@ simshow(array[:, :, 1])
 
 # ╔═╡ 18c39411-899a-445b-8433-b524cf395ea0
 radon(zeros((128, 128, 1)), range(0, 2pi, 300))
+
+# ╔═╡ 58e706a6-14f1-404c-9cfa-2544dd6df098
+md"# Test filtered Backprojection"
+
+# ╔═╡ ca30b03e-815b-496a-b704-0c8496ac6a02
+begin
+	array3 = zeros((32, 32));
+	
+	array3[10:15, 10:11] .= 1
+	
+	array3[10:12, 20:26] .= 1
+end
+
+# ╔═╡ 0e7ffeb5-da26-4b99-b0c1-d9ac9af4e4d0
+
+
+# ╔═╡ bbf9207c-c816-4fa7-9ddf-e9a37209f583
+
+
+# ╔═╡ 12a1165d-2aa4-4066-87cb-1cec156511e2
+simshow(array3)
+
+# ╔═╡ 26ccc58c-00e8-4d57-bc74-de6a3a544ab8
+simshow(sinogram2[:,:,1])
+
+# ╔═╡ 2a3fe939-77b0-4388-9b9e-f9bee9e35e1b
+I_2 = iradon(sinogram2, angles2);
+
+# ╔═╡ a33c5c99-00c3-437d-bfa7-2c0d12fb2339
+simshow(I_2[:,:,1])
+
+# ╔═╡ 660a58b7-c626-465c-ab9d-86549d8f7668
+simshow(sinogram2)
+
+# ╔═╡ ef6de020-ba4a-4dce-8a77-f706c1910270
+array_filtered = filtered_backprojection(sinogram2, angles2)
+
+# ╔═╡ ecb578ff-4dca-4260-9124-0bc17499d071
+array_iradon = iradon(sinogram2, angles2)
+
+# ╔═╡ 2adbe3a7-c0bf-4e2d-bdec-4f62e29055af
+sum(array_iradon)
+
+# ╔═╡ 65781501-0237-4caf-aa4e-4a83338e4658
+simshow(array_filtered / sum(array_filtered))
+
+# ╔═╡ 9ad1a6ef-8fa0-4abb-9ed8-81f39c702229
+sum(array_filtered)
+
+# ╔═╡ 0a88ffea-434c-4e49-a319-95ff6a5f19e4
+sum(sinogram2) / 32
+
+# ╔═╡ b20e4dd4-75f2-402e-8521-32757f73040a
+sum(array3)
+
+# ╔═╡ c73a49c1-3249-4b8c-a7ba-75c9477ba999
+≈(array_filtered / sum(array_filtered) .+ 0.1, array3 / sum(array3) .+ 0.1, rtol=0.05)
+
+# ╔═╡ fb6a1ca0-639f-4f42-a252-f0fe3975107c
+simshow(.≈(array_filtered / sum(array_filtered) .+ 0.1, array3 / sum(array3) .+ 0.1, rtol=0.1))
+
+# ╔═╡ d661d92c-c11b-429f-8666-56a217da4776
+# ╠═╡ disabled = true
+#=╠═╡
+sinogram2 = radon(img, angles2)
+  ╠═╡ =#
+
+# ╔═╡ d67b47ad-f259-4efd-9afa-ebdb43fba34a
+sinogram2 = radon(array3, angles2)
+
+# ╔═╡ 01eed37a-d5f0-4c19-bcc9-445b41f44fb0
+angles2 = range(0, π, 200);
+
+# ╔═╡ e272e8e5-a294-47b2-a012-192c31179a4a
+# ╠═╡ disabled = true
+#=╠═╡
+angles2 = range(0, π, 100)
+  ╠═╡ =#
 
 # ╔═╡ Cell order:
 # ╠═1f8b489e-1028-11ee-3580-150afa948930
@@ -255,8 +330,26 @@ radon(zeros((128, 128, 1)), range(0, 2pi, 300))
 # ╠═c11adcd4-a478-4bd6-bb5e-fa746f1e3f69
 # ╠═c242d6c2-b19c-4cc1-b7dd-d54394eddfc6
 # ╠═08f287ca-21e9-4ffe-b21d-ec036aca39f4
+# ╠═4a580750-d9ed-46a6-92a7-6066f4aebbab
 # ╠═f07ccb05-518d-43f2-bbdf-c2851fa1b6aa
 # ╠═c04e6df6-6f48-45f6-b08e-b5648aa37e70
 # ╠═ccfd6d3d-5d11-46d4-be4b-52bc7dbd7292
 # ╠═d4772dd9-16d2-462a-8efb-16954af831aa
 # ╠═18c39411-899a-445b-8433-b524cf395ea0
+# ╟─58e706a6-14f1-404c-9cfa-2544dd6df098
+# ╠═ca30b03e-815b-496a-b704-0c8496ac6a02
+# ╠═0e7ffeb5-da26-4b99-b0c1-d9ac9af4e4d0
+# ╠═bbf9207c-c816-4fa7-9ddf-e9a37209f583
+# ╠═01eed37a-d5f0-4c19-bcc9-445b41f44fb0
+# ╠═12a1165d-2aa4-4066-87cb-1cec156511e2
+# ╠═d67b47ad-f259-4efd-9afa-ebdb43fba34a
+# ╠═660a58b7-c626-465c-ab9d-86549d8f7668
+# ╠═ef6de020-ba4a-4dce-8a77-f706c1910270
+# ╠═ecb578ff-4dca-4260-9124-0bc17499d071
+# ╠═2adbe3a7-c0bf-4e2d-bdec-4f62e29055af
+# ╠═65781501-0237-4caf-aa4e-4a83338e4658
+# ╠═9ad1a6ef-8fa0-4abb-9ed8-81f39c702229
+# ╠═0a88ffea-434c-4e49-a319-95ff6a5f19e4
+# ╠═b20e4dd4-75f2-402e-8521-32757f73040a
+# ╠═c73a49c1-3249-4b8c-a7ba-75c9477ba999
+# ╠═fb6a1ca0-639f-4f42-a252-f0fe3975107c

@@ -1,6 +1,6 @@
 module RadonKA
 
-using KernelAbstractions, CUDA, CUDA.CUDAKernels
+using KernelAbstractions
 using IndexFunArrays
 using FFTW
 using Atomix
@@ -8,6 +8,5 @@ using Atomix
 include("utils.jl")
 include("radon.jl")
 include("iradon.jl")
-
 
 end

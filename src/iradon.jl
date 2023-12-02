@@ -1,9 +1,13 @@
-export iradon
+export iradon, filtered_backprojection
 
-iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
-    iradon(sinogram, T.(angles); backend)
+"""
+    filtered_backprojection(sinogram, θs, backend=CPU())
 
-function filtered_backprojection(sinogram::AbstractArray{T, 3}, θs, μ=nothing; backend=CPU()) where T
+Calculates the simple Filtered Backprojection in CT with applying a ramp filter
+in Fourier space.
+
+"""
+function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, backend=CPU()) where T
     filter = similar(sinogram, (size(sinogram, 1),))
     filter .= rr(T, (size(sinogram, 1), )) 
 
@@ -12,9 +16,28 @@ function filtered_backprojection(sinogram::AbstractArray{T, 3}, θs, μ=nothing;
     return iradon(sinogram, θs, backend=backend)
 end
 
+# handle 2D
+iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
+    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles; backend), :, :, 1)
 
+iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
+    iradon(sinogram, T.(angles); backend)
 
+"""
+    iradon(sinogram, θs; backend=CPU())
 
+Calculates the parallel inverse Radon transform of the `sinogram`.
+The first two dimensions are y and x. The third dimension is z, the rotational axis.
+Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
+
+`θs` is a vector or range storing the angles in radians.
+
+`backend` can be either `CPU()` for multithreaded CPU execution or
+`CUDABackend()` for CUDA execution. In principle, all backends of KernelAbstractions.jl should work
+but are not tested.
+
+See also [`radon`](@ref).
+"""
 function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 			    backend=CPU()) where T
     #@assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
@@ -40,6 +63,7 @@ function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 	kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
 					ndrange=(N, N_angles, size(img, 3)))
 
+    img ./= N .* length(angles)
 	return img
 end
 
