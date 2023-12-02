@@ -1,5 +1,7 @@
 export iradon
 
+iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
+    iradon(sinogram, T.(angles); backend)
 
 function filtered_backprojection(sinogram::AbstractArray{T, 3}, θs, μ=nothing; backend=CPU()) where T
     filter = similar(sinogram, (size(sinogram, 1),))
