@@ -40,7 +40,7 @@ See also [`radon`](@ref).
 """
 function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 			    backend=CPU()) where T
-    #@assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
+    @assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
     # this is the actual size we are using for calculation
 	N = size(sinogram, 1)
 	N_angles = size(angles, 1)

@@ -30,7 +30,7 @@ See also [`iradon`](@ref).
 """
 function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 			   backend=CPU()) where T
-	@assert iseven(size(img, 1)) && iseven(size(img, 2))
+    @assert iseven(size(img, 1)) && iseven(size(img, 2)) && size(img, 1) == size(img, 2) "Arrays has to be quadratic and even sized shape"
     # this is the actual size we are using for calculation
 	N = size(img, 1) - 1
 	N_angles = size(angles, 1)
