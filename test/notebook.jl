@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.26
+# v0.19.32
 
 using Markdown
 using InteractiveUtils
@@ -19,24 +19,24 @@ using RadonKA, ImageShow, IndexFunArrays, PlutoUI, CUDA
 
 # ╔═╡ 071b6c72-86ec-461a-ad7d-adf0fc696399
 begin
-	sinogram = zeros(Float32, (10, 2, 1))
+	sinogram = zeros(Float32, (9, 2, 1))
 	sinogram[5, :, 1] .= 1
 end
 
 # ╔═╡ 575487cf-faa2-41eb-9062-f030741be67b
-
+simshow(sinogram[:, :, 1])
 
 # ╔═╡ 7fcb40e4-4530-4ce1-a267-84b46309ab2a
-@show iradon(sinogram, [0], 1)
+@show iradon(sinogram, [0f0, π*1f0])
 
 # ╔═╡ 49629e15-c5f4-42ff-b196-24e13124f8f3
-@show I_r = iradon(sinogram, [2pi - pi/4], 1)
+@show I_r = iradon(sinogram, Float32[2pi - pi/4])
 
 # ╔═╡ be118fec-3051-47a4-bf15-ac9d8d8c8e2e
-sum(iradon(sinogram, [2pi - pi/4], 1))
+sum(iradon(sinogram, Float32[2pi - pi/4]))
 
 # ╔═╡ 80970ba6-a09f-46db-8b15-fa7226cdc400
-sum(iradon(sinogram, [0], 1))
+sum(iradon(sinogram, Float32[0]))
 
 # ╔═╡ c969f6d0-cfcc-4846-b970-9f6b734ac7cd
 simshow(I_r[:, :, 1])
@@ -71,21 +71,21 @@ simshow(I_2[:,:,1])
 
 # ╔═╡ 2435a78b-5142-483e-afaf-6091b78724a5
 begin
-	sinogram_big = zeros(Float32, (30, 2, 1))
+	sinogram_big = zeros(Float32, (29, 2, 1))
 	sinogram_big[20, :, 1] .= 1
 end
 
 # ╔═╡ 8d9b6ea3-bbc0-48c1-a824-9749d6b8df0f
-sum(iradon(sinogram_big, [0], 1)[:, :, 1])
+sum(iradon(sinogram_big, [0f0])[:, :, 1])
 
 # ╔═╡ 73a756d9-9984-4452-b90a-9cced7959813
-sum(iradon(sinogram_big, [pi/4], 1)[:, :, 1])
+sum(iradon(sinogram_big, [pi/4f0])[:, :, 1])
 
 # ╔═╡ b1607e05-d9ac-46cc-83b0-0f2b2c433059
-simshow(iradon(sinogram_big, [3.4], 1)[:, :, 1])
+simshow(iradon(sinogram_big, [3.4f0])[:, :, 1])
 
 # ╔═╡ 773e3961-e398-4d4b-a5e6-76b457561976
-simshow(iradon(sinogram_big, [0], 1)[:, :, 1])
+simshow(iradon(sinogram_big, [0])[:, :, 1])
 
 # ╔═╡ 5103d58e-34c8-4b9c-a0ab-c4f88f436186
 md"# Radon"
@@ -115,11 +115,11 @@ begin
 	i = 1
 	for θ in angles
 		cc = size(sg, 1) ÷ 2 + 1
-		x,y = (12, 9) .- (cc)
+		x,y = (11, 8) .- (cc)
 	
-		x,y = [cos(θ) sin(θ); -sin(θ) cos(θ)] * [x, y]
+		y,x = [cos(θ) sin(θ); -sin(θ) cos(θ)] * [x, y]
 
-		c =  cc + x - 1 + 1f-8
+		c =  cc + x + 1f-8
 
 		c1 = floor(Int, c)
 		c2 = ceil(Int, c)
@@ -130,14 +130,20 @@ begin
 	end
 end
 
+# ╔═╡ e8f4af35-d908-4b0d-b5cd-6332a6a78964
+theory
+
+# ╔═╡ a9719576-ce8a-4adf-95e2-18e748bd5a02
+15 ÷ 2
+
+# ╔═╡ 5bceb117-c839-4bfb-84fe-2a92be024fa6
+size(sg)
+
 # ╔═╡ d35fcf11-fe18-494e-b5af-c5cba4b0a1a3
 simshow(theory[:, :, 1])
 
 # ╔═╡ a3c4fd5b-a297-4875-8389-b42d82fc0dfc
-≈(sg, theory, rtol=0.1)
-
-# ╔═╡ 3eead087-8400-4a22-9ef2-fc74a5c247ff
-
+≈(sg, theory, rtol=0.3)
 
 # ╔═╡ 937726a1-64af-4fac-8d86-d115533183a0
 begin
@@ -159,7 +165,7 @@ simshow(radon(array2, [pi/2])[:, :, 1])
 simshow(array[:, :, 1])
 
 # ╔═╡ 00b91330-5aca-4c3f-9d35-3164fabaea04
-sg2 = radon(array, [pi/2, pi + pi/2, 2pi+ pi/2], 1.0)
+sg2 = radon(array, [pi/2, pi + pi/2, 2pi+ pi/2])
 
 # ╔═╡ 7c75d09d-317c-4788-9df1-2644ef4d19fe
 rad2deg(2.356194490192345)
@@ -174,10 +180,10 @@ exp(-9)
 simshow(sg2[:, :, 1])
 
 # ╔═╡ c242d6c2-b19c-4cc1-b7dd-d54394eddfc6
-@show radon(array, range(0, pi, 8), 1.0);
+@show radon(array, range(0, pi, 8));
 
 # ╔═╡ 08f287ca-21e9-4ffe-b21d-ec036aca39f4
-a = radon(array, [0, pi/2, pi, pi + pi/2,2pi], 1.0);
+a = radon(array, [0, pi/2, pi, pi + pi/2,2pi]);
 
 # ╔═╡ f07ccb05-518d-43f2-bbdf-c2851fa1b6aa
 maximum(a, dims=1)
@@ -192,7 +198,7 @@ simshow(a[:, :, 1])
 simshow(array[:, :, 1])
 
 # ╔═╡ 18c39411-899a-445b-8433-b524cf395ea0
-radon(zeros((128, 128, 1)), range(0, 2pi, 300), 1.0)
+radon(zeros((128, 128, 1)), range(0, 2pi, 300))
 
 # ╔═╡ Cell order:
 # ╠═1f8b489e-1028-11ee-3580-150afa948930
@@ -222,11 +228,13 @@ radon(zeros((128, 128, 1)), range(0, 2pi, 300), 1.0)
 # ╠═2312af02-941f-4ab2-b8b8-02ba437bf5d0
 # ╠═efe3724b-0ec0-48db-98ae-8ae7d924419a
 # ╠═a1a808eb-316d-4e6b-b42a-11c45b55ae36
+# ╠═e8f4af35-d908-4b0d-b5cd-6332a6a78964
 # ╠═13d70988-d480-4915-b9e6-67622d7dbca8
 # ╠═fba7aedc-612c-40fd-b7b2-ebb1c364faa2
+# ╠═a9719576-ce8a-4adf-95e2-18e748bd5a02
+# ╠═5bceb117-c839-4bfb-84fe-2a92be024fa6
 # ╠═d35fcf11-fe18-494e-b5af-c5cba4b0a1a3
 # ╠═a3c4fd5b-a297-4875-8389-b42d82fc0dfc
-# ╠═3eead087-8400-4a22-9ef2-fc74a5c247ff
 # ╠═937726a1-64af-4fac-8d86-d115533183a0
 # ╠═8ce53564-3bdf-4ab7-9ec5-cd4560fdd4be
 # ╠═53baff4f-25a4-4659-9b08-ee0d6abf3d05

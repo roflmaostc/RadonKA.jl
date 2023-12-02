@@ -1,5 +1,9 @@
 export radon
 
+radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
+    radon(img, T.(angles); backend)
+
+
 """
     radon(I, θs; backend=CPU())
 
