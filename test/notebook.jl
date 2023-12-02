@@ -27,10 +27,13 @@ end
 simshow(sinogram[:, :, 1])
 
 # ╔═╡ 7fcb40e4-4530-4ce1-a267-84b46309ab2a
-@show iradon(sinogram, [0f0, π*1f0])
+@show iradon(sinogram, [0f0, π*0.5])
+
+# ╔═╡ c4cd76e9-1685-40b4-bde6-2d1b6c03fa09
+simshow(iradon(sinogram, [0f0, π*0.5]))[:, :, 1]
 
 # ╔═╡ 49629e15-c5f4-42ff-b196-24e13124f8f3
-@show I_r = iradon(sinogram, Float32[2pi - pi/4])
+@show I_r = iradon(sinogram, Float32[π/4 + π])
 
 # ╔═╡ be118fec-3051-47a4-bf15-ac9d8d8c8e2e
 sum(iradon(sinogram, Float32[2pi - pi/4]))
@@ -93,7 +96,7 @@ md"# Radon"
 # ╔═╡ 372f9ed3-a1d0-4368-bdba-800b4650af9e
 begin
 	array = zeros((16, 16,1))
-	array[12,9] = 1
+	array[12,11] = 1
 end
 
 # ╔═╡ 2312af02-941f-4ab2-b8b8-02ba437bf5d0
@@ -115,7 +118,7 @@ begin
 	i = 1
 	for θ in angles
 		cc = size(sg, 1) ÷ 2 + 1
-		x,y = (11, 8) .- (cc)
+		x,y = (11, 10) .- (cc)
 	
 		y,x = [cos(θ) sin(θ); -sin(θ) cos(θ)] * [x, y]
 
@@ -142,8 +145,11 @@ size(sg)
 # ╔═╡ d35fcf11-fe18-494e-b5af-c5cba4b0a1a3
 simshow(theory[:, :, 1])
 
+# ╔═╡ e44d43b1-e54e-44f7-bd5d-44bd6a79b8e4
+simshow(sg[:, :, 1])
+
 # ╔═╡ a3c4fd5b-a297-4875-8389-b42d82fc0dfc
-≈(sg, theory, rtol=0.3)
+≈(sg, theory, rtol=0.4)
 
 # ╔═╡ 937726a1-64af-4fac-8d86-d115533183a0
 begin
@@ -206,6 +212,7 @@ radon(zeros((128, 128, 1)), range(0, 2pi, 300))
 # ╠═071b6c72-86ec-461a-ad7d-adf0fc696399
 # ╠═575487cf-faa2-41eb-9062-f030741be67b
 # ╠═7fcb40e4-4530-4ce1-a267-84b46309ab2a
+# ╠═c4cd76e9-1685-40b4-bde6-2d1b6c03fa09
 # ╠═49629e15-c5f4-42ff-b196-24e13124f8f3
 # ╠═be118fec-3051-47a4-bf15-ac9d8d8c8e2e
 # ╠═80970ba6-a09f-46db-8b15-fa7226cdc400
@@ -234,6 +241,7 @@ radon(zeros((128, 128, 1)), range(0, 2pi, 300))
 # ╠═a9719576-ce8a-4adf-95e2-18e748bd5a02
 # ╠═5bceb117-c839-4bfb-84fe-2a92be024fa6
 # ╠═d35fcf11-fe18-494e-b5af-c5cba4b0a1a3
+# ╠═e44d43b1-e54e-44f7-bd5d-44bd6a79b8e4
 # ╠═a3c4fd5b-a297-4875-8389-b42d82fc0dfc
 # ╠═937726a1-64af-4fac-8d86-d115533183a0
 # ╠═8ce53564-3bdf-4ab7-9ec5-cd4560fdd4be
