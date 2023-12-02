@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.26
+# v0.19.32
 
 using Markdown
 using InteractiveUtils
@@ -38,16 +38,20 @@ md"# Simple Image"
 
 # ╔═╡ 1c9d828d-eb69-4792-9fdb-9698939ba69f
 begin
-	img = zeros(Float32, (768, 768, 3))
+	#img = zeros(Float32, (512, 512, 1))
 	
-	img .+= box(img, (60,30, 300), offset=(300, 250, 10))
-	img .+= box(img, (100,300, 300), offset=(150, 250, 10))
+	#img .+= box(img, (60,30, 300), offset=(300, 250, 10))
+	#img .+= box(img, (100,300, 300), offset=(150, 250, 10))#
 
-	img .+= rr2(img, offset=(300, 350, 10)) .< 60^2
-	img .-= rr2(img, offset=(300, 350, 10)) .< 40^2
-	img .+= rr2(img, offset=(300, 350, 10)) .< 20^2
+#	img .+= rr2(img, offset=(300, 350, 10)) .< 60^2
+#	img .-= rr2(img, offset=(300, 350, 10)) .< 40^2
+#	img .+= rr2(img, offset=(300, 350, 10)) .< 20^2
 
-	#img .+= box(img, (20,10), offset=(140, 100))
+	#img .+= box(img, (20,10, 3), offset=(320, 320, 1))
+
+	img = box(Float32, (512, 512, 1), (40, 40, 1), offset=(55, 80, 1)) |> collect
+	
+	img .+= 0.0f0 .+ (rr2(Float32, (512, 512), offset=(150, 120)) .< 50 .^2)
 end;
 
 # ╔═╡ 105f9f3e-9af8-415c-b191-2c03da508c01
@@ -60,22 +64,28 @@ simshow(img[:, :, depth])
 md"# Radon Transform"
 
 # ╔═╡ 937e9211-e37d-4424-82d3-7542d9ce934d
-θs = range(0f0, Float32(π), 1000)
+θs = range(0f0, Float32(2π), 361)
 
 # ╔═╡ c3fa0010-b173-482d-b1f8-84683ed4927f
-@time sinogram = radon(img, θs, 0.003f0);
+@time sinogram = radon(img, θs, nothing);
+
+# ╔═╡ 7ca0d6b9-880c-4d3f-b609-954ad251cf93
+size(sinogram)
 
 # ╔═╡ b79839d8-c0c7-4534-9140-ee1efc624f88
 img_c = CuArray(img);
 
 # ╔═╡ e5daf24c-c814-45bc-b00c-d0a0080ed60c
-CUDA.@time CUDA.@sync sinogram_c = radon(img_c, θs, 0.003f0, backend=CUDABackend());
+begin
+	CUDA.@time CUDA.@sync sinogram_c = radon(img_c, θs, backend=CUDABackend());
+	sinogram_c = sinogram_c + circshift(sinogram_c, (0, 1)) + circshift(sinogram_c, (0, 2)) +circshift(sinogram_c, (0, 3))+ circshift(sinogram_c, (0, -1)) + circshift(sinogram_c, (0, -2))+ circshift(sinogram_c, (0, -3))
+end;
 
 # ╔═╡ 4e039f6a-dfa8-4fe2-8680-2ec2646e6788
 @bind depth2 Slider(1:size(img, 3), show_value=true)
 
 # ╔═╡ 80c0c8da-87ec-4d2f-b389-198e0ddb49ac
-simshow(sinogram[:, :, depth2])
+simshow(Array(sinogram_c)[:, :, depth2])
 
 # ╔═╡ f88a45d5-181b-4afd-94f3-0584ce14af1f
 md"# Iradon Transform"
@@ -131,6 +141,7 @@ simshow(Array(img_filtered_c)[:, :, depth3])
 # ╟─db6f96e5-cbad-40f6-abda-09f64ce988ff
 # ╠═937e9211-e37d-4424-82d3-7542d9ce934d
 # ╠═c3fa0010-b173-482d-b1f8-84683ed4927f
+# ╠═7ca0d6b9-880c-4d3f-b609-954ad251cf93
 # ╠═b79839d8-c0c7-4534-9140-ee1efc624f88
 # ╠═e5daf24c-c814-45bc-b00c-d0a0080ed60c
 # ╟─4e039f6a-dfa8-4fe2-8680-2ec2646e6788

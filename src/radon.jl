@@ -15,80 +15,80 @@ The first two dimensions are y and x. The third dimension is z, the rotational a
 Please note: the implementation is not quite optimize for cache efficiency and 
 it is a very naive algorithm. But still, it is quite fast.
 """
-function radon(I::AbstractArray{T, 3},  θs, μ=nothing; backend=CPU()) where T			
-	sz = size(I)
-	@assert sz[1] == sz[2]
-    @assert iseven(sz[1]) "Array needs to have a even number along x and y"
-    @assert μ === nothing || typeof(μ) == T "Either choose μ=nothing or with a Float type being equal to $(T)"
-    
+function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
+			   backend=CPU()) where T
+	@assert iseven(size(img, 1)) && iseven(size(img, 2))
+    # this is the actual size we are using for calculation
+	N = size(img, 1) - 1
+	N_angles = size(angles, 1)
+
+    # the only significant allocation
+	sinogram = similar(img, (N, N_angles, size(img, 3)))
+	fill!(sinogram, 0)
+
+    # radius of the cylinder we are projecting through
+	radius = size(img, 1) ÷ 2 - 1
+    # mid point, it is actually N ÷ 2 + 1
+    # but because of how adress the indices, we need 1.5 instead of +1
+    mid = size(img, 1) ÷ 2 + T(1.5)
+    # the y_dists samplings, in principle we can add this as function parameter 
+	y_dists = similar(img, (size(img, 1) - 1, ))
+	y_dists .= -radius:radius
+
+	#@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
 	kernel! = radon_kernel!(backend)
-
-	I_itp = let
-		if I isa CuArray
-			I_itp = interpolate(I, (BSpline(Linear()), BSpline(Linear()), NoInterp()))
-			I_itp = adapt(CuArray{eltype(I)}, I_itp);
-		else
-			I_itp = interpolate(I, (BSpline(Linear()), BSpline(Linear()), NoInterp()))
-		end
-	end
+	kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
+					ndrange=(N, N_angles, size(img, 3)))
 	
-	# center coordinate
-	cc = sz[1] ÷ 2 + 1
-	# radius of the object, no rays outside of the radius are considered
-	R = (sz[1] - 3) ÷ 2
-	
-	# all rays, in index steps
-	rays_y = -R:one(T):R
-
-	prop = 0:2*R
-
-    sinogram = similar(I, size(I, 1), length(θs), size(I, 3))
-    fill!(sinogram, 0)
-	
-	kernel!(sinogram, I_itp, θs, rays_y, prop, cc, R, μ, ndrange=(length(rays_y), length(θs), sz[3]))
-
-
 	return sinogram
 end
 
-@kernel function radon_kernel!(sinogram::AbstractArray{T}, I_itp,
-			θs, rays_y, prop, cc, R, μ) where T
-    i_rays_y, iθ, i_z = @index(Global, NTuple)
+"""
+    radon_kernel!(sinogram, img,
+                  y_dists, angles, mid, radius)
 
-	θ = θs[iθ]
-	sθ = -sin(θ)
-	cθ = cos(θ)
+"""
+@kernel function radon_kernel!(sinogram::AbstractArray{T},
+			img, y_dists, angles, mid, radius) where T
+    # r is the index of the angles
+    # k is the index of the detector spatial coordinate
+    # i_z is the index for the z dimension
+	 k, r, i_z = @index(Global, NTuple)
 
-	y_ray = rays_y[i_rays_y]
+	angle = angles[r]
+	sinα, cosα = sincos(angle)
 
-	# x is the coordinate being on the circle
-	x_s = R * cos(asin(T(y_ray) / R))
-	x = cc + x_s * cθ - y_ray * sθ
-	y = cc + x_s * sθ + y_ray * cθ
-	#factor = exp(T(-0.01))
-	#value = sinogram[round(Int, y_ray) + cc - 1 , i_z, iθ]
+    # x0, y0, x1, y1 beginning and end point of each ray
+	a, b, c, d = next_ray_on_circle(img, angle, y_dists[k], mid, radius, sinα, cosα)
 
+    # different comparisons depending which direction the ray is propagating
+	cac = a <= c ? (a,c) -> a<=c : (a,c) -> a>=c
+	cbd = b <= d ? (b,d) -> b<=d : (b,d) -> b>=d
+
+	l = 1
+    # acculumators of the intensity
 	tmp = zero(T)
+	while cac(a, c) && cbd(b, d)
+		a_old, b_old = a, b
+        # would be good to move this branch outside of the while loop
+        # but maybe branch prediction is doing a good job here
+		if a ≈ c && b ≈ d
+			break
+		end
 
-    if μ === nothing
-	    for i_prop = 1:round(Int, (2 * x_s) / prop[end] * length(prop))
-	    	prop_dist = prop[i_prop]
-	    	Δy = - sθ * prop_dist
-	    	Δx = - cθ * prop_dist
-	    	tmp += I_itp(y + Δy, x + Δx, i_z)
-	    end
-    else
-        for i_prop = 1:round(Int, (2 * x_s) / prop[end] * length(prop))
-	    	prop_dist = prop[i_prop]
-	    	Δy = - sθ * prop_dist
-	    	Δx = - cθ * prop_dist
-            d = abs(distance_to_boundary(x + Δx - cc, -(y + Δy - cc), θ, R))
-            h = I_itp(y + Δy, x + Δx, i_z)
-	    	tmp += h * exp(-μ * d)
-	    end
-    end
+        # find the next intersection for the ray
+		@inline a, b = find_next_intersection(a,b,c,d)
+		l += 1
 
-	sinogram[round(Int, y_ray) + cc - 1, iθ, i_z] = tmp
+        # find the cell it is cutting through
+		@inline cell_i, cell_j = find_cell((a_old, b_old),
+								   (a, b))
+
+        # distance travelled through that cell
+		distance = sqrt((a_old - a) ^2 +
+						(b_old - b) ^2)
+        # cell value times distance travelled through
+		@inbounds tmp += distance * img[cell_i, cell_j, i_z]
+	end
+	@inbounds sinogram[k, r, i_z] = tmp
 end
-
-
