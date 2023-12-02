@@ -18,3 +18,6 @@ Requires Julia 1.9
 ```julia
 julia> ]add https://github.com/roflmaostc/RadonKA.jl
 ```
+
+# Development
+File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](https://github.com/roflmaostc/RadonKA.jl) if you encounter any problems.
