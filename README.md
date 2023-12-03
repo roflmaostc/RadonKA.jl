@@ -8,7 +8,7 @@ A simple but still decently fast Radon and IRadon transform based on [KernelAbst
 # Quick Overview
 * [x] For 2D and 3D arrays 
 * [x] parallel `radon` and `iradon`
-* [ ] parallel exponential `radon` and `iradon`
+* [x] parallel exponential `radon` and `iradon`
 * [x] It is restricted to the incircle of radius `N ÷ 2 - 1` if the array has size `(N, N, N_z)`
 * [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl)
 * [x] tested on `CPU()` and `CUDABackend`
