@@ -128,8 +128,8 @@ simshow([object_printed object_printed .> thresh2 abs.((object_printed .> thresh
 
 # ╔═╡ b5ae35db-bf7d-4c00-a069-8572af9bc1de
 begin
-		histogram(object_printed[img .== 0], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 1000))
-		histogram!(object_printed[img .== 1], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 1000))
+		histogram(object_printed[img .== 0], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution void", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 1000))
+		histogram!(object_printed[img .== 1], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution object", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 1000))
 		plot!([thresholds[1], thresholds[1]], [0, 100_000], label="Lower threshold")
 		plot!([thresholds[2], thresholds[2]], [0, 100_000], label="Upper threshold")
 		plot!([thresh2, thresh2], [0, 3000], label="Real threshold")
