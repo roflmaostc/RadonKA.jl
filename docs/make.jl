@@ -5,6 +5,7 @@ makedocs(modules = [RadonKA],
          sitename = "RadonKA.jl", 
          pages = Any[
             "RadonKA.jl" => "index.md",
+            "Tutorial" =>  "tutorial.md",
             "Function Docstrings" =>  "functions.md"
          ],
          warnonly=true,
