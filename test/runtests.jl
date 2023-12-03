@@ -12,6 +12,18 @@ using Test
 
     end
 
+    @testset "Exponential iradon" begin
+	    sinogram = zeros(Float64, (9, 1))
+	    sinogram[5, :] .= 1
+
+
+        angles = [0]
+        arr = iradon(sinogram, angles, 0.1) .* 9 .* 1
+
+        exp.(-(8.5:-1:1.5) .* 0.1) ≈ arr[6, begin+1:end-1]
+    end
+
+
     @testset "Compare with theoretical radon" begin
 
         array = zeros((16, 16,1))

@@ -7,21 +7,21 @@ Calculates the simple Filtered Backprojection in CT with applying a ramp filter
 in Fourier space.
 
 """
-function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector; backend=CPU()) where T
+function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, μ=nothing; backend=CPU()) where T
     filter = similar(sinogram, (size(sinogram, 1),))
     filter .= rr(T, (size(sinogram, 1), )) 
 
     p = plan_fft(sinogram, (1,))
     sinogram = real(inv(p) * (p * sinogram .* ifftshift(filter)))
-    return iradon(sinogram, θs, backend=backend)
+    return iradon(sinogram, θs, μ, backend=backend)
 end
 
 # handle 2D
-iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
-    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles; backend), :, :, 1)
+iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles, μ; backend), :, :, 1)
 
-iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
-    iradon(sinogram, T.(angles); backend)
+iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+    iradon(sinogram, T.(angles), μ; backend)
 
 """
     iradon(sinogram, θs; backend=CPU())
@@ -43,9 +43,17 @@ but are not tested.
 
 See also [`radon`](@ref).
 """
-function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
+function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing;
 			    backend=CPU()) where T
     @assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
+
+    absorption_f = let μ=μ
+        if isnothing(μ)
+            (x, y, x_start, y_start) -> one(T)
+        else
+            (x, y, x_start, y_start) -> exp(-μ * sqrt((x - x_start)^2 + (y - y_start)^2))
+        end
+    end
     # this is the actual size we are using for calculation
     N = size(sinogram, 1)
     N_angles = size(angles, 1)
@@ -66,7 +74,8 @@ function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
     #@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
     kernel! = iradon_kernel!(backend)
     kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
-    				ndrange=(N, N_angles, size(img, 3)))
+            absorption_f,
+    		ndrange=(N, N_angles, size(img, 3)))
     
     img ./= N .* length(angles)
     return img
@@ -74,11 +83,12 @@ end
 
 """
     iradon_kernel!(sinogram, img,
-                  y_dists, angles, mid, radius)
-
+                  y_dists, angles, mid, radius,
+                  absorption_f)
 """
 @kernel function iradon_kernel!(sinogram::AbstractArray{T},
-			img, y_dists, angles, mid, radius) where T
+			img, y_dists, angles, mid, radius,
+            absorption_f) where T
     # r is the index of the angles
     # k is the index of the detector spatial coordinate
     # i_z is the index for the z dimension
@@ -89,7 +99,7 @@ end
     
     # x0, y0, x1, y1 beginning and end point of each ray
     a, b, c, d = next_ray_on_circle(img, angle, y_dists[k], mid, radius, sinα, cosα)
-    
+    a0, b0, c0, d0 = a, b, c, d 
     # different comparisons depending which direction the ray is propagating
     cac = a <= c ? (a,c) -> a<=c : (a,c) -> a>=c
     cbd = b <= d ? (b,d) -> b<=d : (b,d) -> b>=d
@@ -117,7 +127,7 @@ end
         distance = sqrt((a_old - a) ^2 +
         				(b_old - b) ^2)
         # cell value times distance travelled through
-        Atomix.@atomic img[cell_i, cell_j, i_z] += distance * sinogram[k, r, i_z]
+        Atomix.@atomic img[cell_i, cell_j, i_z] += distance * sinogram[k, r, i_z] * absorption_f(a, b, a0, b0)
     end
 end
 
