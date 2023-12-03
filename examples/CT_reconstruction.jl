@@ -135,7 +135,7 @@ sinogram_c = CuArray(sinogram);
 guess_c = CuArray(guess);
 
 # ╔═╡ 0166e1a8-03b5-480f-951f-4c1b73ebb954
-Ireco_c = reshape(solve(solver, vec(sinogram_c)), (N, N), startVector=guess_c)
+Ireco_c = reshape(solve(solver, vec(sinogram_c), startVector=guess_c), (N, N))
 
 # ╔═╡ Cell order:
 # ╠═5cc65690-91d8-11ee-07f9-557c9a76e478
