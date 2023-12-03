@@ -42,7 +42,7 @@ K = 300
 angles = Float32.(range(0, π, K))
 
 # ╔═╡ 0378cea6-8a61-4e16-a99a-e2160c83518b
-@time sinogram = poisson(radon(sample, angles), 1000);
+@time sinogram = poisson(radon(sample, angles), 400);
 
 # ╔═╡ c93ecf01-1a06-4c3e-9c4d-ae1516f38749
 size(sinogram)
@@ -70,7 +70,7 @@ simshow(sample_filtered)
 
 # ╔═╡ a303b94f-8807-4fe5-974a-7914db10f8eb
 md"# Iterative Reconstruction
-For that we define a linear `radon_map` which defines the efficient forward operation and the adjoint. We use [LinearMaps](https://github.com/JuliaLinearAlgebra/LinearMaps.jl) for that. We adapted [this example](https://jso.dev/tutorials/introduction-to-linear-operators/#using_functions).
+For that we define a linear `radon_map` which defines the efficient forward operation and the adjoint. We use [LinearOperators](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) for that. We adapted [this example](https://jso.dev/tutorials/introduction-to-linear-operators/#using_functions).
 
 For the Regularized Least Squares we use [RegularizedLeastSquares.jl](https://github.com/JuliaImageRecon/RegularizedLeastSquares.jl).
 
