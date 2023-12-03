@@ -1,4 +1,4 @@
-# RadonKA
+# RadonKA.jl
 A simple but still decently fast Radon and IRadon transform based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
 
 [![Build Status](https://github.com/roflmaostc/RadonKA.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/roflmaostc/RadonKA.jl/actions/workflows/CI.yml?query=branch%3Amain)
