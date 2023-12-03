@@ -7,7 +7,7 @@ Calculates the simple Filtered Backprojection in CT with applying a ramp filter
 in Fourier space.
 
 """
-function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, backend=CPU()) where T
+function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector; backend=CPU()) where T
     filter = similar(sinogram, (size(sinogram, 1),))
     filter .= rr(T, (size(sinogram, 1), )) 
 

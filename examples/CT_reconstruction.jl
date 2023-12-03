@@ -15,10 +15,7 @@ end
 using TestImages, RadonKA, ImageShow, ImageIO, Noise, PlutoUI
 
 # ╔═╡ 4458d362-1aae-4a24-9bf7-2bed6286579a
-using RegularizedLeastSquares, LinearMaps, IterativeSolvers, LinearOperators
-
-# ╔═╡ 5b4e5e74-8dd1-45d4-90a7-9b1211c17696
-using Random
+using RegularizedLeastSquares, IterativeSolvers, LinearOperators
 
 # ╔═╡ b881ba80-7b02-4f2a-9fad-b61c4ee218c1
 using CUDA, CUDA.CUDAKernels
@@ -73,43 +70,11 @@ simshow(sample_filtered)
 
 # ╔═╡ a303b94f-8807-4fe5-974a-7914db10f8eb
 md"# Iterative Reconstruction
-For that we define a linear `radon_map` which defines the efficient forward operation and the adjoint. We use [LinearMaps](https://github.com/JuliaLinearAlgebra/LinearMaps.jl) for that.
+For that we define a linear `radon_map` which defines the efficient forward operation and the adjoint. We use [LinearMaps](https://github.com/JuliaLinearAlgebra/LinearMaps.jl) for that. We adapted [this example](https://jso.dev/tutorials/introduction-to-linear-operators/#using_functions).
 
 For the Regularized Least Squares we use [RegularizedLeastSquares.jl](https://github.com/JuliaImageRecon/RegularizedLeastSquares.jl).
 
 "
-
-# ╔═╡ 90c2e9af-4528-4e30-afe5-bd570592bf27
-Base.retry_load_extensions()
-
-# ╔═╡ e49ade0d-0c14-49b4-b156-5a83ffa93fd3
-struct RadonMap{F, A}
-	forward::F
-	adjoint::A
-end
-
-# ╔═╡ 90bc785e-9ae2-47f2-8d85-32c606a39954
-struct RadonAdjoint{A}
-	adjoint::A
-end
-
-# ╔═╡ 48ac5f37-918d-4aa4-a049-61e3779e8e13
-Base.:*(rm::RadonMap, x) = rm.forward(x)
-
-# ╔═╡ 53af9808-be5e-4386-9a82-460dfdf147b8
-Base.:*(rm::RadonAdjoint, x) = rm.adjoint(x)
-
-# ╔═╡ 843c8c0d-99fb-4198-a0cb-5f7ab829b792
-Base.adjoint(rm::RadonMap) = RadonAdjoint(rm.adjoint)
-
-# ╔═╡ e9e71b13-487c-4706-b8b8-831a60474ffc
-rm = RadonMap(x -> vec(radon(reshape(x, (N, N)), angles)), x -> vec(iradon(reshape(x, (N-1, K)), angles)))
-
-# ╔═╡ 4df0a17e-79fa-4fd5-8b8d-1ad0369b55eb
-radon_map = LinearMap(
-	x -> vec(radon(reshape(x, (N, N)), angles)), 
-	x -> vec(iradon(reshape(x, (N-1, K)), angles)),
-	(N - 1) * K, N*N)
 
 # ╔═╡ 104b78de-022b-4419-867a-1d99a2663f8c
 function radon_f!(res, v, α, β)
@@ -130,58 +95,47 @@ function iradon_f!(res, w, α, β)
 end
 
 # ╔═╡ d3b27172-3373-4176-a8bd-475acd825e8d
-dft = LinearOperator(Float32, (N - 1) * K, N*N, false, false,
+radon_map = LinearOperator(Float32, (N - 1) * K, N*N, false, false,
                      radon_f!,
                      nothing,       # will be inferred
                      iradon_f!)
 
 # ╔═╡ 90ef6756-60ac-4b5d-8620-73566a465d22
+# seem to work
 simshow(reshape(radon_map * vec(sample), (N - 1, K)))
 
 # ╔═╡ e2207cd2-9471-460f-9eb4-fcfed59cbe7e
-adjoint(radon_map) * vec(sinogram)
+adjoint(radon_map) * vec(sinogram) ≈ sample_iradon[:]
 
 # ╔═╡ ad5b1b23-2187-411c-89c2-ea4a9c8bd2b0
-guess = vec(copy(sample_iradon));
-
-# ╔═╡ 1066c9df-026f-4877-8dbd-901dbb283ce3
-dft * sample[:]
-
-# ╔═╡ 10435932-ee34-42d1-88b1-562038c2aab4
-dft * sample[:]
-
-# ╔═╡ 79942dd9-17f6-4072-83ca-6cc2fa83c28f
-size(sample[:])
-
-# ╔═╡ 5ab727b8-8731-49d4-ab40-01d410e0b7ae
-vec(sample) |> size
+guess = vec(copy(sample_filtered));
 
 # ╔═╡ 48bbb97c-d12d-4282-92f9-02525d21f3ee
-reg = TVRegularization(0.01; shape=(N,N))
+reg = TVRegularization(0.001f0; shape=(N,N), startVector=guess)
 
 # ╔═╡ ea6d5aa7-09de-4c1e-9a46-00e7d5267433
-solver = createLinearSolver(ADMM, dft; reg=reg, ρ=0.1, iterations=20)
+solver = createLinearSolver(ADMM, radon_map; reg=reg, ρ=0.1, iterations=20)
 
 # ╔═╡ 8917be57-4a1b-4f1a-bcf2-c29b32e0c726
-Ireco = solve(solver, vec(sinogram))
+@time Ireco = reshape(solve(solver, vec(sinogram)), (N, N))
 
 # ╔═╡ 924f005c-3b18-4ac7-9723-fda33068a90d
+[simshow(sample) simshow(Ireco) simshow(sample_filtered)]
 
-
-# ╔═╡ fb1fe392-c271-450f-bf35-7c7b6865e5f2
+# ╔═╡ 38eca17b-deca-47e2-a7fb-6b5fb93e1b3e
 cg!(guess, radon_map, vec(sinogram))
-
-# ╔═╡ 10e0d74e-9287-4997-85ae-bdbf99c83c6d
-vec(guess) |> size
 
 # ╔═╡ 01b6465b-eabf-48b2-95f9-a689784a2516
 md"# Accelerate with CUDA"
 
+# ╔═╡ 846099aa-c8fe-4559-ac53-204146f7854d
+sinogram_c = CuArray(sinogram);
+
+# ╔═╡ 5bdf05d9-fbc7-417b-b26e-2d645151fc60
+guess_c = CuArray(guess);
+
 # ╔═╡ 0166e1a8-03b5-480f-951f-4c1b73ebb954
-
-
-# ╔═╡ 21532638-2948-4b80-add4-4f6489d19e5f
-
+Ireco_c = reshape(solve(solver, vec(sinogram_c)), (N, N), startVector=guess_c)
 
 # ╔═╡ Cell order:
 # ╠═5cc65690-91d8-11ee-07f9-557c9a76e478
@@ -204,32 +158,19 @@ md"# Accelerate with CUDA"
 # ╠═eff77ed3-a9ea-4459-b64e-c4459b31619b
 # ╟─a303b94f-8807-4fe5-974a-7914db10f8eb
 # ╠═4458d362-1aae-4a24-9bf7-2bed6286579a
-# ╠═90c2e9af-4528-4e30-afe5-bd570592bf27
-# ╠═e49ade0d-0c14-49b4-b156-5a83ffa93fd3
-# ╠═90bc785e-9ae2-47f2-8d85-32c606a39954
-# ╠═48ac5f37-918d-4aa4-a049-61e3779e8e13
-# ╠═53af9808-be5e-4386-9a82-460dfdf147b8
-# ╠═843c8c0d-99fb-4198-a0cb-5f7ab829b792
-# ╠═e9e71b13-487c-4706-b8b8-831a60474ffc
-# ╠═4df0a17e-79fa-4fd5-8b8d-1ad0369b55eb
 # ╠═104b78de-022b-4419-867a-1d99a2663f8c
 # ╠═3873e3c9-b9cf-48d7-9ef5-b1372778c138
 # ╠═d3b27172-3373-4176-a8bd-475acd825e8d
 # ╠═90ef6756-60ac-4b5d-8620-73566a465d22
 # ╠═e2207cd2-9471-460f-9eb4-fcfed59cbe7e
 # ╠═ad5b1b23-2187-411c-89c2-ea4a9c8bd2b0
-# ╠═1066c9df-026f-4877-8dbd-901dbb283ce3
-# ╠═10435932-ee34-42d1-88b1-562038c2aab4
-# ╠═79942dd9-17f6-4072-83ca-6cc2fa83c28f
-# ╠═5ab727b8-8731-49d4-ab40-01d410e0b7ae
 # ╠═ea6d5aa7-09de-4c1e-9a46-00e7d5267433
 # ╠═48bbb97c-d12d-4282-92f9-02525d21f3ee
-# ╠═5b4e5e74-8dd1-45d4-90a7-9b1211c17696
 # ╠═8917be57-4a1b-4f1a-bcf2-c29b32e0c726
 # ╠═924f005c-3b18-4ac7-9723-fda33068a90d
-# ╠═fb1fe392-c271-450f-bf35-7c7b6865e5f2
-# ╠═10e0d74e-9287-4997-85ae-bdbf99c83c6d
+# ╠═38eca17b-deca-47e2-a7fb-6b5fb93e1b3e
 # ╟─01b6465b-eabf-48b2-95f9-a689784a2516
-# ╠═0166e1a8-03b5-480f-951f-4c1b73ebb954
-# ╠═21532638-2948-4b80-add4-4f6489d19e5f
 # ╠═b881ba80-7b02-4f2a-9fad-b61c4ee218c1
+# ╠═846099aa-c8fe-4559-ac53-204146f7854d
+# ╠═5bdf05d9-fbc7-417b-b26e-2d645151fc60
+# ╠═0166e1a8-03b5-480f-951f-4c1b73ebb954

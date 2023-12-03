@@ -25,10 +25,18 @@ end
 using RadonKA
 
 # ╔═╡ 1311e853-c4cd-42bb-8bf3-5e0d564bf9c5
-using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest
+using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest, TestImages
 
 # ╔═╡ 03bccb92-b47f-477a-9bdb-74cc404da690
 using KernelAbstractions, CUDA, CUDA.CUDAKernels
+
+# ╔═╡ 6f6c8d28-5a54-440e-9b7a-52e1fce959ab
+md"# Activate example environment"
+
+# ╔═╡ f5e2024b-deaf-4344-b610-a4b956abbfaa
+md"# Load CUDA
+In case you have no CUDA card available, there will be an error later :)
+"
 
 # ╔═╡ 810aebe4-2c6e-4ba6-916b-9e4306df33c9
 TableOfContents()
@@ -46,7 +54,7 @@ begin
 	#img = box(Float32, (N, N, N_z), (N ÷2, N ÷ 2, 50), offset=(N ÷ 2 - 50, N ÷ 2 + 50, N_z ÷ 2)) |> collect
 	
 	img .+= 0.0f0 .+ (rr2(Float32, (N, N, N_z), offset=(180, 210, N_z÷2)) .< 30 .^2)
-
+	img[:, :, 1] .= testimage("resolution_test_512")
 	#img = box(Float32, (100, 100), (3, 3), offset=(51, 51)) |> collect
 end;
 
@@ -57,7 +65,7 @@ img_c = CuArray(img);
 md"# Radon Transform"
 
 # ╔═╡ b8618268-0892-4abc-ae26-e25e41d07968
-angles = range(0f0, 2f0π, 361)[begin:end-1]
+angles = range(0f0, 2f0π, 500)[begin:end-1]
 
 # ╔═╡ 135e728b-efd8-44bc-81d9-6a2244ce4c31
 angles_c = CuArray(angles);
@@ -90,11 +98,11 @@ md"# IRadon Transform"
 # ╔═╡ 7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
 @time backproject = RadonKA.iradon(sinogram, angles);
 
-# ╔═╡ 0d2ccb21-a041-4fc4-b8b8-6bdc543e89e6
-rad2deg(angles[90])
+# ╔═╡ 4e367035-eb2f-4dfa-9646-7c182a111c49
+md"Use this slider to add more and more angles to the iradon transform"
 
 # ╔═╡ b9bf49a0-7320-4269-9a6a-ac2533ab5fde
-@bind angle_limit Slider(1:size(sinogram, 2), show_value=true)
+@bind angle_limit Slider(1:size(sinogram, 2), default=size(sinogram, 2), show_value=true)
 
 # ╔═╡ 93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
 CUDA.@time CUDA.@sync backproject_cu = RadonKA.iradon(sinogram_c[:, begin:angle_limit, :], CuArray(angles[begin:angle_limit]), backend=CUDABackend());
@@ -121,9 +129,11 @@ simshow(Array(filtered_bproj[:, :, i_z4]))
 backproject ≈ Array(backproject_cu)
 
 # ╔═╡ Cell order:
+# ╠═6f6c8d28-5a54-440e-9b7a-52e1fce959ab
 # ╠═4eb3148e-8f8b-11ee-3cfe-854d3bd5cc80
 # ╠═b336e55e-0be4-422f-b48a-0a2242cb0915
 # ╠═1311e853-c4cd-42bb-8bf3-5e0d564bf9c5
+# ╟─f5e2024b-deaf-4344-b610-a4b956abbfaa
 # ╠═03bccb92-b47f-477a-9bdb-74cc404da690
 # ╟─810aebe4-2c6e-4ba6-916b-9e4306df33c9
 # ╟─d25c1381-baf1-429b-8150-622b8f731d83
@@ -141,7 +151,7 @@ backproject ≈ Array(backproject_cu)
 # ╠═3d584d94-b88f-4738-a470-7db1fb3fb996
 # ╟─edbf1577-0fd4-4261-bd04-499bc1a0debd
 # ╠═7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
-# ╠═0d2ccb21-a041-4fc4-b8b8-6bdc543e89e6
+# ╟─4e367035-eb2f-4dfa-9646-7c182a111c49
 # ╟─b9bf49a0-7320-4269-9a6a-ac2533ab5fde
 # ╠═93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
 # ╠═52a86ed8-4504-4d9e-9ea6-6aeaf8540406
