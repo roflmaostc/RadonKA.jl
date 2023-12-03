@@ -2,12 +2,12 @@ export radon
 
 
 
-radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
-    radon(img, T.(angles); backend)
+radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+    radon(img, T.(angles), μ; backend)
 
 # handle 2D
-radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}; backend=CPU()) where {T, T2} =
-    view(radon(reshape(img, (size(img)..., 1)), angles; backend), :, :, 1)
+radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+    view(radon(reshape(img, (size(img)..., 1)), angles, μ; backend), :, :, 1)
 
 """
     radon(I, θs; backend=CPU())
@@ -21,9 +21,13 @@ Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
 
 `θs` is a vector or range storing the angles in radians.
 
-`backend` can be either `CPU()` for multithreaded CPU execution or
-`CUDABackend()` for CUDA execution. In principle, all backends of KernelAbstractions.jl should work
-but are not tested
+# Exponential IRadon Transform
+If `μ != nothing`, then the rays are attenuated with `exp(-μ * dist)` where `dist` 
+is the distance to the circular boundary of the field of view.
+`μ` is in units of pixel length. So `μ=1` corresponds to an attenuation of `exp(-1)` if propagated through one pixel.
+
+# Keywords 
+* `backend` can be either `CPU()` for multithreaded CPU execution or `CUDABackend()` for CUDA execution. In principle, all backends of KernelAbstractions.jl should work but are not tested.
 
 
 Please note: the implementation is not quite optimized for cache efficiency and 
@@ -44,9 +48,19 @@ julia> radon(arr, [0, π/4, π/2])
  0.0  0.0      0.0
 ```
 """
-function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
+function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing;
 			   backend=CPU()) where T
     @assert iseven(size(img, 1)) && iseven(size(img, 2)) && size(img, 1) == size(img, 2) "Arrays has to be quadratic and even sized shape"
+
+
+    absorption_f = let μ=μ
+        if isnothing(μ)
+            (x, y, x_start, y_start) -> one(T)
+        else
+            (x, y, x_start, y_start) -> exp(-T(μ) * sqrt((x - x_start)^2 + (y - y_start)^2))
+        end
+    end
+
     # this is the actual size we are using for calculation
     N = size(img, 1) - 1
     N_angles = size(angles, 1)
@@ -67,18 +81,20 @@ function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
     #@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
     kernel! = radon_kernel!(backend)
     kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
-    				ndrange=(N, N_angles, size(img, 3)))
+            absorption_f,
+    		ndrange=(N, N_angles, size(img, 3)))
     
     return sinogram
 end
 
 """
     radon_kernel!(sinogram, img,
-                  y_dists, angles, mid, radius)
+                  y_dists, angles, mid, radius,
+                  absorption_f)
 
 """
 @kernel function radon_kernel!(sinogram::AbstractArray{T},
-			img, y_dists, angles, mid, radius) where T
+			img, y_dists, angles, mid, radius, absorption_f) where T
     # r is the index of the angles
     # k is the index of the detector spatial coordinate
     # i_z is the index for the z dimension
@@ -89,7 +105,7 @@ end
     
     # x0, y0, x1, y1 beginning and end point of each ray
     a, b, c, d = next_ray_on_circle(img, angle, y_dists[k], mid, radius, sinα, cosα)
-    
+    a0, b0, c0, d0 = a, b, c, d 
     # different comparisons depending which direction the ray is propagating
     cac = a <= c ? (a,c) -> a<=c : (a,c) -> a>=c
     cbd = b <= d ? (b,d) -> b<=d : (b,d) -> b>=d
@@ -117,7 +133,7 @@ end
         distance = sqrt((a_old - a) ^2 +
         				(b_old - b) ^2)
         # cell value times distance travelled through
-        @inbounds tmp += distance * img[cell_i, cell_j, i_z]
+        @inbounds tmp += distance * img[cell_i, cell_j, i_z] * absorption_f(a, b, a0, b0)
     end
     @inbounds sinogram[k, r, i_z] = tmp
 end

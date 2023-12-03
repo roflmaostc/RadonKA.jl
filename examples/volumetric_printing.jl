@@ -55,8 +55,8 @@ See this paper: Rackson, Charles M., et al. "Object-space optimization of tomogr
 """
 
 # ╔═╡ 0c1abf70-8004-460a-b008-750050f6e718
-function iter!(buffer, img, θs; filtered=true, clip_sinogram=true, backend=CPU())
-	sinogram = radon(img, θs; backend)
+function iter!(buffer, img, θs, μ; filtered=true, clip_sinogram=true, backend=CPU())
+	sinogram = radon(img, θs, μ; backend)
 	if filtered
 		sinogram = ramp_filter(sinogram)
 	end
@@ -65,14 +65,14 @@ function iter!(buffer, img, θs; filtered=true, clip_sinogram=true, backend=CPU(
 		sinogram .= max.(sinogram, 0)
 	end
 	
-	img_recon = iradon(sinogram, θs; backend)
+	img_recon = iradon(sinogram, θs, μ; backend)
 
 	buffer .= max.(img_recon, 0)
 	return buffer, sinogram
 end
 
 # ╔═╡ 5ac76842-f5a3-42c0-9764-9b20f98ab1d5
-function optimize(img, θs; thresholds=(0.65, 0.75), N_iter = 2, backend=CPU())
+function optimize(img, θs, μ=nothing; thresholds=(0.65, 0.75), N_iter = 2, backend=CPU())
 	N = size(img, 1)
 	fx = (-N / 2):1:(N /2 -1)
 	R2D = similar(img)
@@ -87,11 +87,11 @@ function optimize(img, θs; thresholds=(0.65, 0.75), N_iter = 2, backend=CPU())
 	isobject = isone.(img)
 	
 	buffer = copy(img)
-	tmp, s = iter!(buffer, guess, θs; filtered=false, clip_sinogram=true, backend)
+	tmp, s = iter!(buffer, guess, θs, μ; filtered=false, clip_sinogram=true, backend)
 	for i in 1:N_iter
 		guess[notobject] .-= max.(0, tmp[notobject] .- thresholds[1])
 
-		tmp, s = iter!(buffer, guess, θs; backend, filtered=false, clip_sinogram=true)
+		tmp, s = iter!(buffer, guess, θs, μ; backend, filtered=false, clip_sinogram=true)
 
 		guess[isobject] .+= max.(0, thresholds[2] .- tmp[isobject])
 	end
@@ -109,7 +109,7 @@ angles = range(0, 2π, 350)
 thresholds = (0.7, 0.8)
 
 # ╔═╡ 96f6eba3-1700-4c29-aff6-5f774d7d4b3b
-@time virtual_object, patterns_optimized = optimize(img, angles; N_iter=50, thresholds)
+@time virtual_object, patterns_optimized = optimize(img, angles; N_iter=100, thresholds)
 
 # ╔═╡ 5568ca5b-2aad-4024-8cf0-d68260a4ac36
 simshow(patterns_optimized)
@@ -128,7 +128,8 @@ simshow([object_printed object_printed .> thresh2 abs.((object_printed .> thresh
 
 # ╔═╡ b5ae35db-bf7d-4c00-a069-8572af9bc1de
 begin
-		histogram(object_printed[:], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 1000))
+		histogram(object_printed[img .== 0], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 1000))
+		histogram!(object_printed[img .== 1], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 1000))
 		plot!([thresholds[1], thresholds[1]], [0, 100_000], label="Lower threshold")
 		plot!([thresholds[2], thresholds[2]], [0, 100_000], label="Upper threshold")
 		plot!([thresh2, thresh2], [0, 3000], label="Real threshold")
@@ -152,6 +153,45 @@ Array(object_printed_c) ≈ object_printed
 # ╔═╡ 8be0b6ee-5a54-4d7f-a7bf-e71b0a637439
 simshow([object_printed object_printed_c .> thresh2 abs.((object_printed .> thresh2) .- img)])
 
+# ╔═╡ ebc5cce3-180c-412d-8b09-0004115a6e78
+
+
+# ╔═╡ 3767200c-6a46-4afa-8390-d566a36d4ebd
+md"# Exponential Absorption"
+
+# ╔═╡ 8ca1db87-9a1f-45af-840b-e10458047cfa
+thresholds2 = (0.6, 0.7)
+
+# ╔═╡ 96c079e9-0676-4115-bf5e-f6084293b884
+μ=1/70f0
+
+# ╔═╡ ed4495a1-89aa-4415-8604-53a4bd05046c
+CUDA.@sync CUDA.@time virtual_object_c_abs, patterns_optimized_c_abs = optimize(CuArray(img), CuArray(angles), μ; N_iter=1000, thresholds=thresholds2, backend=CUDABackend())
+
+# ╔═╡ 56400f42-8f18-4bb2-a224-3b2513a6c35b
+object_printed_abs = Array(iradon(Array(patterns_optimized_c_abs), angles, μ));
+
+# ╔═╡ ed116dd3-5d1c-4a5e-869c-101c44e0c42b
+md"Threshold =$(@bind thresh3 Slider(0.0:0.005:1, show_value=true))"
+
+# ╔═╡ 9b39771c-92f0-43db-9880-dcf26f99e455
+begin
+		histogram(object_printed_abs[img .== 0], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution", ylabel="voxel count", xlabel="normalized intensity", ylim=(0, 500))
+		histogram!(object_printed_abs[img .== 1], bins=(0.0:0.01:1), label="dose distribution", ylim=(0, 500))
+		plot!([thresholds2[1], thresholds2[1]], [0, 100_000], label="Lower threshold")
+		plot!([thresholds2[2], thresholds2[2]], [0, 100_000], label="Upper threshold")
+		plot!([thresh3, thresh3], [0, 3000], label="Real threshold")
+end
+
+# ╔═╡ bf450d7c-536b-452f-96c6-d07aa78e9f31
+simshow([object_printed_abs object_printed_abs .> thresh3 abs.((object_printed_abs .> thresh3) .- img)])
+
+# ╔═╡ 8e843705-f4b5-46b1-80f5-d60753f9a05a
+
+
+# ╔═╡ fb10aac8-2068-4452-83e1-1624a8375d2c
+
+
 # ╔═╡ f5d516a4-dd22-4971-977b-1526db3571c8
 md"# Large optimization"
 
@@ -170,7 +210,10 @@ simshow(volume[:, :, 1])
 angles2 = range(0, π, 200)
 
 # ╔═╡ 2fd28802-e7dd-4eec-903a-3b94b87cbc16
+# ╠═╡ disabled = true
+#=╠═╡
 CUDA.@sync CUDA.@time virtual_object_c2, patterns_optimized_c2 = optimize(CuArray(volume), CuArray(angles2); N_iter=50, thresholds, backend=CUDABackend())
+  ╠═╡ =#
 
 # ╔═╡ da12770d-4e4e-457b-bbaa-affad72eac33
 object_printed_c2 = Array(iradon(Array(patterns_optimized_c2), angles2));
@@ -205,6 +248,17 @@ simshow(object_printed_c2 .> 0.74)[:, :, 1]
 # ╠═2515881d-be85-4e5a-87fb-881aaa860464
 # ╠═178846ee-5678-4332-9cb9-f900090f06fa
 # ╠═8be0b6ee-5a54-4d7f-a7bf-e71b0a637439
+# ╠═ebc5cce3-180c-412d-8b09-0004115a6e78
+# ╟─3767200c-6a46-4afa-8390-d566a36d4ebd
+# ╠═8ca1db87-9a1f-45af-840b-e10458047cfa
+# ╠═96c079e9-0676-4115-bf5e-f6084293b884
+# ╠═ed4495a1-89aa-4415-8604-53a4bd05046c
+# ╠═56400f42-8f18-4bb2-a224-3b2513a6c35b
+# ╠═9b39771c-92f0-43db-9880-dcf26f99e455
+# ╟─ed116dd3-5d1c-4a5e-869c-101c44e0c42b
+# ╟─bf450d7c-536b-452f-96c6-d07aa78e9f31
+# ╠═8e843705-f4b5-46b1-80f5-d60753f9a05a
+# ╠═fb10aac8-2068-4452-83e1-1624a8375d2c
 # ╟─f5d516a4-dd22-4971-977b-1526db3571c8
 # ╠═51dbb38f-ad62-4664-ba95-2f943a33ce60
 # ╠═bd6bca52-a797-4a12-a24d-7989e9d941c8
