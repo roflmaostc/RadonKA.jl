@@ -12,8 +12,11 @@ radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}; backend=CPU()) whe
 """
     radon(I, θs; backend=CPU())
 
-Calculates the parallel Radon transform of the three dimensional AbstractArray `I`.
+Calculates the parallel Radon transform of the AbstractArray `I`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
+`size(I, 1)` and `size(I, 2)` have to be equal and a even number. 
+The Radon transform is rotated around the pixel `size(I, 1) ÷ 2 + 1`, so there
+is always a real center pixel!
 Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
 
 `θs` is a vector or range storing the angles in radians.
@@ -27,6 +30,19 @@ Please note: the implementation is not quite optimized for cache efficiency and
 it is a very naive algorithm. But still, it is fast!
 
 See also [`iradon`](@ref).
+
+# Example
+The reason the sinogram has the value `1.41421` for the diagonal ray `π/4` is,
+that such a diagonal travels a longer distance through the pixel.
+```jldoctest
+julia> arr = zeros((4,4)); arr[3,3] = 1;
+
+julia> radon(arr, [0, π/4, π/2])
+3×3 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+ 0.0  0.0      0.0
+ 1.0  1.41421  1.0
+ 0.0  0.0      0.0
+```
 """
 function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1};
 			   backend=CPU()) where T

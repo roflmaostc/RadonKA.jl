@@ -29,6 +29,11 @@ iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}; backend=CPU(
 Calculates the parallel inverse Radon transform of the `sinogram`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
 Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
+`size(sinogram, 1)` has to be a odd number. And `size(sinogram, 2)` has to be equal to
+`length(angles)`.
+The inverse Radon transform is rotated around the pixel `size(sinogram, 1) ÷ 2`, so there
+is always a real center pixel!
+Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
 
 `θs` is a vector or range storing the angles in radians.
 
