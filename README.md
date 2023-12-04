@@ -19,6 +19,44 @@ Requires Julia 1.9
 julia> ]add https://github.com/roflmaostc/RadonKA.jl
 ```
 
+
+# Simple use
+```julia
+julia> using RadonKA
+
+julia> arr = zeros((4,4)); arr[3,3] = 1;
+
+julia> radon(arr, [0, π/4, π/2])
+3×3 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+ 0.0  0.0      0.0
+ 1.0  1.41421  1.0
+ 0.0  0.0      0.0
+
+
+julia> arr = zeros((5,2)); arr[2,:] .= 1; arr[4, :] .= 1
+  2-element view(::Matrix{Float64}, 4, :) with eltype Float64:
+   1.0
+   1.0
+  
+julia> iradon(arr, [0, π/2])
+  6×6 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+   0.0  0.0  0.0        0.0  0.0        0.0
+   0.0  0.0  0.1        0.0  0.1        0.0
+   0.0  0.1  0.2        0.1  0.2        0.0232051
+   0.0  0.0  0.1        0.0  0.1        0.0
+   0.0  0.1  0.2        0.1  0.2        0.0232051
+   0.0  0.0  0.0232051  0.0  0.0232051  0.0
+  
+julia> iradon(arr, [0, π/2], 1) # exponential
+  6×6 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+   0.0  0.0         0.0         0.0        0.0         0.0
+   0.0  0.0         0.00145226  0.0        0.00145226  0.0
+   0.0  0.00145226  0.00789529  0.0107308  0.033117    0.0183994
+   0.0  0.0         0.0107308   0.0        0.0107308   0.0
+   0.0  0.00145226  0.033117    0.0107308  0.0583388   0.0183994
+   0.0  0.0         0.0183994   0.0        0.0183994   0.0
+```
+
 # Examples
 See either the [documentation](https://roflmaostc.github.io/RadonKA.jl/dev/tutorial).
 Otherwise, this [example](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/example_radon_iradon.jl) shows the main features, including CUDA support.
