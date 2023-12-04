@@ -13,7 +13,7 @@ Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeF
 
 
 ## RadonKA.jl
-See this [benchmark example](examples/benchmark_radon_iradon.jl)
+See this [benchmark example](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/benchmark_radon_iradon.jl)
 ```julia
 using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest, TestImages
 using RadonKA
