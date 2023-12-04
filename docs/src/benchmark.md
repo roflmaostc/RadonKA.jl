@@ -33,6 +33,19 @@ simshow(sinogram)
 
 CUDA.@time CUDA.@sync sinogram_c = radon(sample_2D_c, angles_c, backend=CUDABackend());
 CUDA.@time CUDA.@sync sample_iradon_c = iradon(sinogram_c, angles_c, backend=CUDABackend());
+
+
+sample_3D = randn(Float32, (512, 512, 100));
+sample_3D_c = CuArray(sample_3D)
+
+@time sinogram_3D = radon(sample_3D, angles);
+@benchmark radon($sample_3D, $angles)
+@benchmark iradon($sinogram_3D, $angles)
+
+sinogram_3D_c = radon(sample_3D_c, angles_c, backend=CUDABackend())
+@benchmark CUDA.@sync radon($sample_3D_c, $angles_c, backend=CUDABackend())
+@benchmark CUDA.@sync iradon($sinogram_3D_c, $angles_c, backend=CUDABackend())
+
 ```
 ![](../assets/radonka_sinogram.png)
 ![](../assets/radonka_iradon.png)
