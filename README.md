@@ -33,6 +33,9 @@ angles = range(0f0, 2f0π, 500)[begin:end-1]
 
 # 0.268649 seconds (147 allocations: 1.015 MiB)
 @time backproject = RadonKA.iradon(sinogram, angles);
+
+simshow(sinogram)
+simshow(backproject)
 ```
 <a  href="docs/src/assets/sinogram.png"><img src="docs/src/assets/sinogram.png"  width="300"></a>
 <a  href="docs/src/assets/radonka_iradon.png"><img src="docs/src/assets/radonka_iradon.png"  width="308"></a>
