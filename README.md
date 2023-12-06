@@ -1,5 +1,5 @@
 # RadonKA.jl
-A simple but still decently fast Radon and inverse Radon (iradon) transform based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
+A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
 
 <a  href="docs/src/assets/RadonKA_logo.png"><img src="docs/src/assets/RadonKA_logo.png"  width="200"></a>
 
