@@ -18,7 +18,7 @@ A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implem
 # Installation
 Requires Julia 1.9
 ```julia
-julia> ]add https://github.com/roflmaostc/RadonKA.jl
+julia> ]add RadonKA
 ```
 
 
