@@ -16,7 +16,7 @@ A simple but still decently fast Radon and IRadon transform based on [KernelAbst
 # Installation
 Requires Julia 1.9
 ```julia
-julia> ]add https://github.com/roflmaostc/RadonKA.jl
+julia> ]add RadonKA
 ```
 
 # Development
