@@ -2,15 +2,17 @@ export radon
 
 
 
-radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; 
+      backend=KernelAbstractions.get_backend(img)) where {T, T2} =
     radon(img, T.(angles), μ; backend)
 
 # handle 2D
-radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; 
+      backend=KernelAbstractions.get_backend(img)) where {T, T2} =
     view(radon(reshape(img, (size(img)..., 1)), angles, μ; backend), :, :, 1)
 
 """
-    radon(I, θs; backend=CPU())
+    radon(I, θs; backend=KernelAbstractions.get_backend(I))
 
 Calculates the parallel Radon transform of the AbstractArray `I`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
@@ -49,7 +51,7 @@ julia> radon(arr, [0, π/4, π/2])
 ```
 """
 function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing;
-			   backend=CPU()) where T
+               backend=KernelAbstractions.get_backend(img)) where T
     @assert iseven(size(img, 1)) && iseven(size(img, 2)) && size(img, 1) == size(img, 2) "Arrays has to be quadratic and even sized shape"
 
 

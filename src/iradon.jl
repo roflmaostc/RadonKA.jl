@@ -1,13 +1,14 @@
 export iradon, filtered_backprojection
 
 """
-    filtered_backprojection(sinogram, θs, backend=CPU())
+    filtered_backprojection(sinogram, θs)
 
 Calculates the simple Filtered Backprojection in CT with applying a ramp filter
 in Fourier space.
 
 """
-function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, μ=nothing; backend=CPU()) where T
+function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, μ=nothing; 
+                                 backend=KernelAbstractions.get_backend(sinogram)) where T
     filter = similar(sinogram, (size(sinogram, 1),))
     filter .= rr(T, (size(sinogram, 1), )) 
 
@@ -17,14 +18,16 @@ function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector
 end
 
 # handle 2D
-iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; 
+       backend=KernelAbstractions.get_backend(sinogram)) where {T, T2} =
     view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles, μ; backend), :, :, 1)
 
-iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; backend=CPU()) where {T, T2} =
+iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; 
+       backend=KernelAbstractions.get_backend(sinogram)) where {T, T2} =
     iradon(sinogram, T.(angles), μ; backend)
 
 """
-    iradon(sinogram, θs, μ=nothing; backend=CPU())
+    iradon(sinogram, θs, μ=nothing)
 
 Calculates the parallel inverse Radon transform of the `sinogram`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
@@ -74,7 +77,7 @@ julia> iradon(arr, [0, π/2], 1) # exponential
 ```
 """
 function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing;
-			    backend=CPU()) where T
+                backend=KernelAbstractions.get_backend(sinogram)) where T
     @assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
 
     absorption_f = let μ=μ
