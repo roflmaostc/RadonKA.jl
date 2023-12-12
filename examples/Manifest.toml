@@ -2,7 +2,7 @@
 
 julia_version = "1.9.4"
 manifest_format = "2.0"
-project_hash = "4f67f3160141b6058520c9460580fb4c412a7948"
+project_hash = "3111db99c0d85e6c92f206851d1aacb8d461b104"
 
 [[deps.AMD]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse_jll"]
@@ -1108,6 +1108,12 @@ git-tree-sha1 = "fc8c15ca848b902015bd4a745d350f02cf791c2a"
 uuid = "99f44e22-a591-53d1-9472-aa23ef4bd671"
 version = "1.2.0"
 
+[[deps.NDTools]]
+deps = ["LinearAlgebra", "OffsetArrays", "PaddedViews", "Random", "Statistics"]
+git-tree-sha1 = "10e35b25261dfd361045e16afa9db5b14a4c1184"
+uuid = "98581153-e998-4eef-8d0d-5ec2c052313d"
+version = "0.5.2"
+
 [[deps.NVTX]]
 deps = ["Colors", "JuliaNVTXCallbacks_jll", "Libdl", "NVTX_jll"]
 git-tree-sha1 = "8bc9ce4233be3c63f8dcd78ccaf1b63a9c0baa34"
@@ -1371,10 +1377,10 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.RadonKA]]
-deps = ["Atomix", "FFTW", "IndexFunArrays", "KernelAbstractions"]
+deps = ["Atomix", "FFTW", "IndexFunArrays", "KernelAbstractions", "PrecompileTools"]
 path = ".."
 uuid = "86de8297-835b-47df-b249-c04e8db91db5"
-version = "0.1.0"
+version = "0.1.1"
 
 [[deps.Random]]
 deps = ["SHA", "Serialization"]
