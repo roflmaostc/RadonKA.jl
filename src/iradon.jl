@@ -20,7 +20,7 @@ end
 # handle 2D
 iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; 
        backend=KernelAbstractions.get_backend(sinogram)) where {T, T2} =
-    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles, μ; backend), :, :, 1)
+    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), T.(angles), μ; backend), :, :, 1)
 
 iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; 
        backend=KernelAbstractions.get_backend(sinogram)) where {T, T2} =
