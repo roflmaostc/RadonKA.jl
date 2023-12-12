@@ -9,7 +9,7 @@ radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing;
 # handle 2D
 radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; 
       backend=KernelAbstractions.get_backend(img)) where {T, T2} =
-    view(radon(reshape(img, (size(img)..., 1)), angles, μ; backend), :, :, 1)
+    view(radon(reshape(img, (size(img)..., 1)), T.(angles), μ; backend), :, :, 1)
 
 """
     radon(I, θs; backend=KernelAbstractions.get_backend(I))
