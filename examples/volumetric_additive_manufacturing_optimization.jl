@@ -141,7 +141,7 @@ function optimize(img::AbstractArray{T}, θs, μ=nothing; thresholds=(0.65, 0.75
 	guess = max.(0, real.(inv(p) * ((p * img) .* ifftshift(R2D, (1,2)))))
 	guess ./= maximum(guess)
 
-	loss(x) = sum(max.(0,thresholds[2] .- x[isobject])) + sum(max.(0, x[notobject] .- thresholds[1])) / length(x)
+	loss(x) = (sum(max.(0,thresholds[2] .- x[isobject])) + sum(max.(0, x[notobject] .- thresholds[1]))) / length(x)
 	#guess = copy(img)
 	notobject = iszero.(img)
 	isobject = isone.(img)
