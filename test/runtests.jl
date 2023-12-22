@@ -76,14 +76,14 @@ using Zygote
 
     @testset "Test gradients" begin
         x = randn((10, 10))
-        test_rrule(radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ NoTangent(), nothing ⊢ NoTangent())
+        test_rrule(radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
         y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
-        test_rrule(iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ NoTangent(), nothing ⊢ NoTangent())
+        test_rrule(iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
         
         x = randn((10, 10))
-        test_rrule(radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ NoTangent(), 0.01⊢ NoTangent())
+        test_rrule(radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), 0.01⊢ ChainRulesTestUtils.NoTangent())
         y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
-        test_rrule(iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ NoTangent(), 0.01 ⊢ NoTangent())
+        test_rrule(iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), 0.01 ⊢ ChainRulesTestUtils.NoTangent())
     end
 
 end
