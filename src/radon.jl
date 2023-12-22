@@ -12,7 +12,7 @@ radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing;
     view(radon(reshape(img, (size(img)..., 1)), T.(angles), μ; backend), :, :, 1)
 
 """
-    radon(I, θs; backend=KernelAbstractions.get_backend(I))
+    radon(I, θs, μ=nothing; backend=KernelAbstractions.get_backend(I))
 
 Calculates the parallel Radon transform of the AbstractArray `I`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
