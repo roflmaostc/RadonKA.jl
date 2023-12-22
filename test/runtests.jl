@@ -1,5 +1,8 @@
 using RadonKA
 using Test
+using FiniteDifferences
+using ChainRulesTestUtils
+using Zygote
 
 @testset "RadonKA.jl" begin
 

@@ -5,6 +5,7 @@ version = "0.1.1"
 
 [deps]
 Atomix = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 IndexFunArrays = "613c443e-d742-454e-bfc6-1d7f8dd76566"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
@@ -19,7 +20,10 @@ PrecompileTools = "1.2"
 julia = "1.9"
 
 [extras]
+ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
+FiniteDifferences = "26cc04aa-876d-5657-8c51-4c34ba976000"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "FiniteDifferences", "Zygote", "ChainRulesTestUtils"]
