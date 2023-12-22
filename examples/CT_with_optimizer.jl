@@ -30,21 +30,21 @@ TableOfContents()
 md"# Set up testimage"
 
 # ╔═╡ 5fc5b324-90ca-4e4a-8b5b-35b9f276c47d
-img = Float32.(testimage("resolution_test_512"))[230:421, 230:421];
+img = Float32.(testimage("resolution_test_512"))[200:421, 200:421];
 
 # ╔═╡ 274e71b3-d4b5-406b-848b-6c8847179125
 simshow(img)
 
 # ╔═╡ b36b1679-d4bd-4a7d-b55e-c0ad930be9d5
 md"# Make a measurement
-We also add some Poisson noise to the measurement
+We also add some Poisson noise to the measurement.
 "
 
 # ╔═╡ e0043bf0-c55e-4160-a97b-41e2acceb19f
-angles = range(0, 2f0 * π, 60)
+angles = range(0, 1f0 * π, 100)
 
 # ╔═╡ 8b8a4aa2-e583-4f50-9082-06b3511b853e
-measurement = poisson(radon(img, angles), 500);
+measurement = poisson(radon(img, angles), 2000);
 
 # ╔═╡ d2f035c7-8bc4-4c2b-aeb5-56ce955b8f4c
 simshow(measurement)
@@ -62,13 +62,18 @@ img_iradon = iradon(measurement, angles);
 [simshow(img_bp) simshow(img_iradon)]
 
 # ╔═╡ 1feccdec-cc35-4cc8-9a76-0e0e99bc7be3
-md"# Optimization with gradient descent"
+md"# Optimization with gradient descent
+
+We construct the loss function `f` and its gradient `g!`. 
+This format is typically used with [Optim.jl](https://julianlsolvers.github.io/Optim.jl/stable/).
+The gradient is calculated by automatic differentiation and the reverse rules of RadonKA.jl
+"
 
 # ╔═╡ e501ede0-62d7-42a1-b258-518be737bd9c
 function make_fg!(fwd_operator, measurement; λ=0.01f0, regularizer=x -> zero(eltype(x)))
 
 	f = let measurement=measurement
-		f(x) = sum(abs2, fwd_operator(x) .- measurement) + λ * regularizer(x)
+		f(x) = mean(abs2, fwd_operator(x) .- measurement) + λ * regularizer(x)
 	end
 
 	g! = let f=f
@@ -126,7 +131,7 @@ reg(x) = @tullio r := sqrt(1f-8 + (x[i,j] - x[i-1, j])^2 + (x[i,j] - x[i, j-1])^
 reg(init0)
 
 # ╔═╡ a69281cf-f024-4cd6-9ae8-a6f52644956a
-f2, g2! = make_fg!(x -> radon(x, angles), measurement, regularizer=reg, λ=30f0)
+f2, g2! = make_fg!(x -> radon(x, angles), measurement, regularizer=reg, λ=0.002f0)
 
 # ╔═╡ a9d74730-2096-4e79-85b6-323ef8a2f54c
 res2 = Optim.optimize(f2, g2!, init0, LBFGS(),
@@ -142,6 +147,7 @@ plot([a.value for a in res2.trace], yscale=:log10)
 # ╔═╡ d91046bd-f5cb-4924-b518-1446a0029b80
 md"# Apply Anscombe transform
 The [Anscombe transform](https://en.wikipedia.org/wiki/Anscombe_transform) helps in the case of Poisson shot noise (as in our case).
+Visually the Anscombe transform results in the best reconstructions.
 "
 
 # ╔═╡ bc38105d-ce12-400f-97a4-7059fa0ca72e
@@ -163,40 +169,8 @@ function make_fg_anscombe!(fwd_operator, measurement; λ=0.01f0, regularizer=x -
 	return f, g!
 end
 
-# ╔═╡ 640ad334-5965-4595-b1f5-9274de8d7906
-function make_fg_anscombe2!(fwd_operator, measurement; λ=0.01f0, regularizer=x -> zero(eltype(x)))
-
-	function fg!(F, G, x)
-		f = let measurement=measurement
-			# apply sqrt for anscombe
-			f(x) = sum(abs2, sqrt.(max.(0, fwd_operator(x)) .+ 3f0/8f0) .- sqrt.(3f0 / 8f0 .+ measurement)) + λ * regularizer(x)
-		end
-
-        if G !== nothing
-			y, back = Zygote._pullback(f, x)
-			G .= back(1)[2]
-			if F !== nothing
-				return y
-			end
-        end
-		
-        if F !== nothing
-            return f(x)
-        end
-	end
-	return fg!
-end
-
 # ╔═╡ 0f73f624-3fd9-42a9-b623-d1be11bbe5af
-f3, g3! = make_fg_anscombe!(x -> radon(x, angles), measurement)
-
-# ╔═╡ fe14124c-03cb-445d-8d7b-fdb2d31d5664
-fg! = make_fg_anscombe2!(x -> radon(x, angles), measurement)
-
-# ╔═╡ 757f78bd-6a1c-47c3-beed-c0ca1eddf558
-@time res4 = Optim.optimize(Optim.only_fg!(fg!), init0, LBFGS(),
-                                 Optim.Options(iterations = 20,  
-                                               store_trace=true))
+f3, g3! = make_fg_anscombe!(x -> radon(x, angles), 500 .* measurement, regularizer=reg, λ=0.0002f0 * 500)
 
 # ╔═╡ 2428fb0d-c911-4ac4-9dec-0fb19d9ad466
 @time res3 = Optim.optimize(f3, g3!, init0, LBFGS(),
@@ -204,7 +178,7 @@ fg! = make_fg_anscombe2!(x -> radon(x, angles), measurement)
                                                store_trace=true))
 
 # ╔═╡ 40bff2bd-fbbb-4840-92f5-7319202afeb5
-[simshow(res3.minimizer) simshow(res2.minimizer) simshow(res.minimizer) simshow(img_bp) simshow(img) ]
+[simshow(res3.minimizer) simshow(res2.minimizer) simshow(img_bp) simshow(img) ]
 
 # ╔═╡ bdd283a2-2ecd-4e66-927b-d961842af434
 compare(a, b) = sum(abs2, a ./ mean(a) .- b ./ mean(b))
@@ -257,10 +231,7 @@ compare(res3.minimizer, img)
 # ╠═3355590b-00d3-4f37-ae4c-8c69dd5dac5f
 # ╟─d91046bd-f5cb-4924-b518-1446a0029b80
 # ╠═bc38105d-ce12-400f-97a4-7059fa0ca72e
-# ╠═640ad334-5965-4595-b1f5-9274de8d7906
 # ╠═0f73f624-3fd9-42a9-b623-d1be11bbe5af
-# ╠═fe14124c-03cb-445d-8d7b-fdb2d31d5664
-# ╠═757f78bd-6a1c-47c3-beed-c0ca1eddf558
 # ╠═2428fb0d-c911-4ac4-9dec-0fb19d9ad466
 # ╠═40bff2bd-fbbb-4840-92f5-7319202afeb5
 # ╠═bdd283a2-2ecd-4e66-927b-d961842af434
