@@ -14,6 +14,7 @@ A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implem
 * [x] It is restricted to the incircle of radius `N ÷ 2 - 1` if the array has size `(N, N, N_z)`
 * [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl)
 * [x] tested on `CPU()` and `CUDABackend`
+* [x] registered adjoint rules for both `radon` and `iradon`
 
 # Installation
 Requires Julia 1.9
@@ -45,7 +46,7 @@ simshow(backproject)
 # Examples
 See either the [documentation](https://roflmaostc.github.io/RadonKA.jl/dev/tutorial).
 Otherwise, this [example](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/example_radon_iradon.jl) shows the main features, including CUDA support.
-There is one tutorial about [Least Square Optimization](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/CT_reconstruction.jl).
+There is one tutorial about [Gradient Descent optimization](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/CT_with_optimizer.jl).
 Another one covers how the Radon transform is used in [Volumetric Additive Manufacturing](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/volumetric_printing.jl).
 
 # Development

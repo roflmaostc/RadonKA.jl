@@ -48,9 +48,9 @@ In the absence of noise, the filtered backprojection works well:
 
 
 # CUDA Support
-RadonKA.jl supports CUDA and usually provide a 10-20x speedup on typical RTX 3xxx or 4xxx GPUs.
-Pay attention that the element type of the array/img has should be `Float32` for good speedup.
-In this case we used a AMD Ryzen 5 5600X 6-Core Processor and a CUDA RTX 3060 Super.
+RadonKA.jl supports CUDA and usually provides a 10-20x speedup on typical RTX 3xxx or 4xxx GPUs.
+Pay attention that the element type of the array/img should be `Float32` for good speedup.
+In my case we used a AMD Ryzen 5 5600X 6-Core Processor and a CUDA RTX 3060 Super.
 ```julia
 using CUDA, CUDA.CUDAKernels
 
@@ -63,7 +63,7 @@ CUDA.@time CUDA.@sync sinogram_c = radon(img_c, angles_c, backend=CUDABackend())
 
 
 # 3D example
-Simple attach a third trailing dimension to the array. The radon transform is computed along the first and second dimension.
+Simply attach a third trailing dimension to the array. The radon transform is computed along the first and second dimension.
 The third dimension is just a *batch* dimension.
 ```julia
 volume = randn(Float32,(512, 512, 512));
