@@ -110,7 +110,6 @@ function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=n
             absorption_f,
     		ndrange=(N, N_angles, size(img, 3)))
     
-    img ./= N .* length(angles)
     return img
 end
 
@@ -149,19 +148,29 @@ end
         end
         
         # find the next intersection for the ray
-        @inline a, b = find_next_intersection(a,b,c,d)
+        a, b = find_next_intersection(a,b,c,d)
         l += 1
         
         # find the cell it is cutting through
-        @inline cell_i, cell_j = find_cell((a_old, b_old),
+        cell_i, cell_j = find_cell((a_old, b_old),
         						   (a, b))
         
         # distance travelled through that cell
         distance = sqrt((a_old - a) ^2 +
         				(b_old - b) ^2)
         # cell value times distance travelled through
-        Atomix.@atomic img[cell_i, cell_j, i_z] += 
+        @inbounds Atomix.@atomic img[cell_i, cell_j, i_z] += 
             distance * sinogram[k, r, i_z] * absorption_f(a, b, a0, b0)
     end
 end
 
+
+ # define adjoint rules
+function ChainRulesCore.rrule(::typeof(iradon), sinogram::AbstractArray, angles, μ=nothing) 
+    res = iradon(sinogram, angles, μ)
+    function pb_iradon(ȳ)
+        ad = radon(unthunk(ȳ), angles, μ)
+        return NoTangent(), ad, NoTangent(), NoTangent()
+    end
+    return res, pb_iradon 
+end

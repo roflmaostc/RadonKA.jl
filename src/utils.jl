@@ -1,4 +1,4 @@
-function find_next_intersection(x₀::T, y₀::T, x₁::T, y₁::T) where T
+@inline function find_next_intersection(x₀::T, y₀::T, x₁::T, y₁::T) where T
 
 	f(t) = (x₀, y₀) .+ t .* (x₁ - x₀, y₁ - y₀)
 

@@ -4,7 +4,9 @@ using KernelAbstractions
 using IndexFunArrays
 using FFTW
 using Atomix
+using ChainRulesCore
 using PrecompileTools
+
 
 include("utils.jl")
 include("radon.jl")

@@ -124,11 +124,11 @@ end
         end
         
         # find the next intersection for the ray
-        @inline a, b = find_next_intersection(a,b,c,d)
+        a, b = find_next_intersection(a,b,c,d)
         l += 1
         
         # find the cell it is cutting through
-        @inline cell_i, cell_j = find_cell((a_old, b_old),
+        cell_i, cell_j = find_cell((a_old, b_old),
         						   (a, b))
         
         # distance travelled through that cell
@@ -138,4 +138,15 @@ end
         @inbounds tmp += distance * img[cell_i, cell_j, i_z] * absorption_f(a, b, a0, b0)
     end
     @inbounds sinogram[k, r, i_z] = tmp
+end
+
+
+ # define adjoint rules
+function ChainRulesCore.rrule(::typeof(radon), array::AbstractArray, angles, μ=nothing) 
+    res = radon(array, angles, μ)
+    function pb_radon(ȳ)
+        ad = iradon(unthunk(ȳ), angles, μ)
+        return NoTangent(), ad, NoTangent(), NoTangent()
+    end
+    return res, pb_radon 
 end
