@@ -2,17 +2,15 @@ export radon
 
 
 
-radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; 
-      backend=KernelAbstractions.get_backend(img)) where {T, T2} =
-    radon(img, T.(angles), μ; backend)
+radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
+    radon(img, T.(angles), μ)
 
 # handle 2D
-radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; 
-      backend=KernelAbstractions.get_backend(img)) where {T, T2} =
-    view(radon(reshape(img, (size(img)..., 1)), T.(angles), μ; backend), :, :, 1)
+radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
+    view(radon(reshape(img, (size(img)..., 1)), T.(angles), μ), :, :, 1)
 
 """
-    radon(I, θs, μ=nothing; backend=KernelAbstractions.get_backend(I))
+    radon(I, θs, μ=nothing)
 
 Calculates the parallel Radon transform of the AbstractArray `I`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
@@ -28,8 +26,7 @@ If `μ != nothing`, then the rays are attenuated with `exp(-μ * dist)` where `d
 is the distance to the circular boundary of the field of view.
 `μ` is in units of pixel length. So `μ=1` corresponds to an attenuation of `exp(-1)` if propagated through one pixel.
 
-# Keywords 
-* `backend` can be either `CPU()` for multithreaded CPU execution or `CUDABackend()` for CUDA execution. In principle, all backends of KernelAbstractions.jl should work but are not tested.
+In principle, all backends of KernelAbstractions.jl should work but are not tested. CUDA and CPU arrays are actively tested.
 
 
 Please note: the implementation is not quite optimized for cache efficiency and 
@@ -50,10 +47,10 @@ julia> radon(arr, [0, π/4, π/2])
  0.0  0.0      0.0
 ```
 """
-function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing;
-               backend=KernelAbstractions.get_backend(img)) where T
+function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing) where T
     @assert iseven(size(img, 1)) && iseven(size(img, 2)) && size(img, 1) == size(img, 2) "Arrays has to be quadratic and even sized shape"
-
+    
+    backend = KernelAbstractions.get_backend(img)
 
     absorption_f = let μ=μ
         if isnothing(μ)

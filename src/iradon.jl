@@ -7,24 +7,21 @@ Calculates the simple Filtered Backprojection in CT with applying a ramp filter
 in Fourier space.
 
 """
-function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, μ=nothing; 
-                                 backend=KernelAbstractions.get_backend(sinogram)) where T
+function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, μ=nothing) where T
     filter = similar(sinogram, (size(sinogram, 1),))
     filter .= rr(T, (size(sinogram, 1), )) 
 
     p = plan_fft(sinogram, (1,))
     sinogram = real(inv(p) * (p * sinogram .* ifftshift(filter)))
-    return iradon(sinogram, θs, μ, backend=backend)
+    return iradon(sinogram, θs, μ)
 end
 
 # handle 2D
-iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; 
-       backend=KernelAbstractions.get_backend(sinogram)) where {T, T2} =
-    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), T.(angles), μ; backend), :, :, 1)
+iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
+    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), T.(angles), μ), :, :, 1)
 
-iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; 
-       backend=KernelAbstractions.get_backend(sinogram)) where {T, T2} =
-    iradon(sinogram, T.(angles), μ; backend)
+iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
+    iradon(sinogram, T.(angles), μ)
 
 """
     iradon(sinogram, θs, μ=nothing)
@@ -44,11 +41,9 @@ If `μ != nothing`, then the rays are attenuated with `exp(-μ * dist)` where `d
 is the distance to the circular boundary of the field of view.
 `μ` is in units of pixel length. So `μ=1` corresponds to an attenuation of `exp(-1)` if propagated through one pixel.
 
-# Keywords 
-* `backend` can be either `CPU()` for multithreaded CPU execution or `CUDABackend()` for CUDA execution. In principle, all backends of KernelAbstractions.jl should work but are not tested.
+In principle, all backends of KernelAbstractions.jl should work but are not tested. CUDA and CPU arrays are actively tested.
 
 See also [`radon`](@ref).
-
 
 # Examples
 ```jldoctest
@@ -76,10 +71,9 @@ julia> iradon(arr, [0, π/2], 1) # exponential
  0.0  0.0         0.0183994   0.0        0.0183994   0.0
 ```
 """
-function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing;
-                backend=KernelAbstractions.get_backend(sinogram)) where T
+function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing) where T
     @assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
-
+    backend=KernelAbstractions.get_backend(sinogram)
     absorption_f = let μ=μ
         if isnothing(μ)
             (x, y, x_start, y_start) -> one(T)

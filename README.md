@@ -46,7 +46,7 @@ simshow(backproject)
 See either the [documentation](https://roflmaostc.github.io/RadonKA.jl/dev/tutorial).
 Otherwise, this [example](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/example_radon_iradon.jl) shows the main features, including CUDA support.
 There is one tutorial about [Least Square Optimization](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/CT_reconstruction.jl).
-Another one cover how the Radon transform is used in [Volumetric Additive Manufacturing](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/volumetric_printing.jl).
+Another one covers how the Radon transform is used in [Volumetric Additive Manufacturing](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/volumetric_printing.jl).
 
 # Development
 File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](https://github.com/roflmaostc/RadonKA.jl) if you encounter any problems.
