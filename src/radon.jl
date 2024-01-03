@@ -82,7 +82,7 @@ function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing
     kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
             absorption_f,
     		ndrange=(N, N_angles, size(img, 3)))
-    
+    KernelAbstractions.synchronize(backend)    
     return sinogram
 end
 
