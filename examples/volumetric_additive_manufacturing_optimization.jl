@@ -105,7 +105,7 @@ end
   ╠═╡ =#
 
 # ╔═╡ 79c1b042-2b9d-43db-9525-d66418db5da2
-img = Float32.((Float32.(Gray.(select_region(load("/tmp/siemens_star.png"), new_size=(512, 512)))) .* (rr2(Float32, (512, 512)) .<= 255 .^2)) .> 0.5);
+img = Float32.((Float32.(Gray.(select_region(load("/home/felix/Documents/code/Printing_Siemens_Star_Target/siemens_star_512px.png"), new_size=(512, 512)))) .* (rr2(Float32, (512, 512)) .<= 255 .^2)) .> 0.5);
 
 # ╔═╡ aa1cccec-f846-4b1e-9aae-81e939cd3b8c
 md"""# Algorithm
@@ -125,7 +125,7 @@ function iter!(buffer, img, θs, μ; filtered=true, clip_sinogram=true)
 	end
 	
 	img_recon = iradon(sinogram, θs, μ)
-
+	img_recon ./= maximum(img_recon)
 	buffer .= max.(img_recon, 0)
 	return buffer, sinogram
 end
@@ -297,6 +297,13 @@ begin
 	save("/tmp/printed_065_075_1mu_thresh_diff.png", simshow(abs.((printed_065_075_1mu .> 0.7) .- img)))
 end
 
+# ╔═╡ fae06fab-a707-487c-aeea-6f0c8e5ca3f6
+begin
+	p4 = plot_histogram(img, printed_065_075_1mu, thresholds, 0.7)
+	savefig(p4, "/tmp/histogram_printed_065_075_1mu.pdf")
+	p4
+end
+
 # ╔═╡ 48aafe12-1e21-4960-b0af-37468ad613f8
 
 
@@ -349,6 +356,18 @@ simshow(patterns_065_075_1mu_long)
 # ╔═╡ e99e8aaa-f538-4647-82af-8e85397d43c8
 
 
+# ╔═╡ 16384727-05a8-48bb-8755-8c47bd28b97c
+# ╠═╡ disabled = true
+#=╠═╡
+begin
+	p4 = plot(losses, yscale=:log10, label="\$T_L =0.65\$, \$T_U=0.75\$", ylabel="normalized loss", xlabel="iterations", yticks=[10^2, 10^3, 10^4, 10^5], grid=true)
+	plot!(losses_2, label="\$T_L =0.5\$, \$T_U=0.8\$")
+	#plot!(losses_3, label="\$T_L =0.75\$, \$T_U=0.8\$")
+	savefig(p4, "/tmp/loss.pdf")
+	p4
+end
+  ╠═╡ =#
+
 # ╔═╡ b974c854-fcf7-4cbc-b3c8-1a8ab34f9190
 
 
@@ -395,25 +414,6 @@ object_printed_c2 = Array(iradon(Array(patterns_optimized_c2), angles2));
 
 # ╔═╡ 9bd41858-b191-4935-b9cc-24fdf6be8cbe
 simshow(object_printed_c2 .> 0.75)[:, :, 1]
-
-# ╔═╡ fae06fab-a707-487c-aeea-6f0c8e5ca3f6
-begin
-	p4 = plot_histogram(img, printed_065_075_1mu, thresholds, 0.7)
-	savefig(p4, "/tmp/histogram_printed_065_075_1mu.pdf")
-	p4
-end
-
-# ╔═╡ 16384727-05a8-48bb-8755-8c47bd28b97c
-# ╠═╡ disabled = true
-#=╠═╡
-begin
-	p4 = plot(losses, yscale=:log10, label="\$T_L =0.65\$, \$T_U=0.75\$", ylabel="normalized loss", xlabel="iterations", yticks=[10^2, 10^3, 10^4, 10^5], grid=true)
-	plot!(losses_2, label="\$T_L =0.5\$, \$T_U=0.8\$")
-	#plot!(losses_3, label="\$T_L =0.75\$, \$T_U=0.8\$")
-	savefig(p4, "/tmp/loss.pdf")
-	p4
-end
-  ╠═╡ =#
 
 # ╔═╡ Cell order:
 # ╠═453f6cca-91ea-11ee-0c48-b923a785e914
