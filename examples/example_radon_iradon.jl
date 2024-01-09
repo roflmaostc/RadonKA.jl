@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.32
+# v0.19.36
 
 using Markdown
 using InteractiveUtils
@@ -18,6 +18,7 @@ end
 begin
 	using Pkg
 	Pkg.activate(".")
+	Pkg.instantiate()
 	using Revise
 end
 
@@ -35,8 +36,15 @@ md"# Activate example environment"
 
 # ╔═╡ f5e2024b-deaf-4344-b610-a4b956abbfaa
 md"# Load CUDA
-In case you have no CUDA card available, there will be an error later :)
+In case you have no CUDA card available, it will run on CPU :)
 "
+
+# ╔═╡ ef92457a-87c0-43bf-a046-9fe82afbbe13
+begin
+	use_CUDA = Ref(true && CUDA.functional())
+	var"@mytime" = use_CUDA[] ? CUDA.var"@time" : var"@time"
+	togoc(x) = use_CUDA[] ? CuArray(x) : x
+end
 
 # ╔═╡ 810aebe4-2c6e-4ba6-916b-9e4306df33c9
 TableOfContents()
@@ -59,23 +67,22 @@ begin
 end;
 
 # ╔═╡ 1393d029-66be-40aa-a2f9-f31317222575
-img_c = CuArray(img);
+img_c = togoc(img);
 
 # ╔═╡ 8be220a4-293d-411d-bbce-e39b64780814
 md"# Radon Transform"
 
 # ╔═╡ b8618268-0892-4abc-ae26-e25e41d07968
-angles = range(0f0, 2f0π, 500)[begin:end-1]
+angles = range(0f0, 2π, 1000)[begin:end-1]
 
 # ╔═╡ 135e728b-efd8-44bc-81d9-6a2244ce4c31
-angles_c = CuArray(angles);
+angles_c = togoc(angles);
 
 # ╔═╡ d2cc6fc6-135b-4c4a-8453-9c5bf9e4a24f
-@time sinogram = radon(img, angles);
+@mytime sinogram = radon(img, angles);
 
 # ╔═╡ dc14103d-993c-402f-a8b5-a35843f3f4ac
-CUDA.@time CUDA.@sync sinogram_c = radon(img_c, angles_c,
-										 backend=CUDABackend());
+@mytime sinogram_c = radon(img_c, angles_c);
 
 # ╔═╡ 783f05e0-2640-4ecd-8c19-1c15a99ee294
 @bind i_z Slider(1:size(sinogram, 3), show_value=true)
@@ -105,7 +112,7 @@ md"Use this slider to add more and more angles to the iradon transform"
 @bind angle_limit Slider(1:size(sinogram, 2), default=size(sinogram, 2), show_value=true)
 
 # ╔═╡ 93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
-CUDA.@time CUDA.@sync backproject_cu = RadonKA.iradon(sinogram_c[:, begin:angle_limit, :], CuArray(angles[begin:angle_limit]), backend=CUDABackend());
+CUDA.@time CUDA.@sync backproject_cu = RadonKA.iradon(sinogram_c[:, begin:angle_limit, :], togoc(angles[begin:angle_limit]));
 
 # ╔═╡ 52a86ed8-4504-4d9e-9ea6-6aeaf8540406
 @bind i_z3 Slider(1:size(sinogram, 3), show_value=true)
@@ -117,7 +124,7 @@ simshow(Array(backproject_cu[:, :, i_z3]))
 md"# Filtered Backprojection"
 
 # ╔═╡ 32b15077-5e09-4693-8f12-3b2029fe63cc
-CUDA.@time CUDA.@sync filtered_bproj = RadonKA.filtered_backprojection(sinogram_c, CuArray(angles), backend=CUDABackend());
+@mytime filtered_bproj = RadonKA.filtered_backprojection(sinogram_c, togoc(angles));
 
 # ╔═╡ bc6e2d40-fcd1-4d7b-8f96-3d4d9e4336de
 @bind i_z4 Slider(1:size(sinogram, 3), show_value=true)
@@ -135,6 +142,7 @@ backproject ≈ Array(backproject_cu)
 # ╠═1311e853-c4cd-42bb-8bf3-5e0d564bf9c5
 # ╟─f5e2024b-deaf-4344-b610-a4b956abbfaa
 # ╠═03bccb92-b47f-477a-9bdb-74cc404da690
+# ╠═ef92457a-87c0-43bf-a046-9fe82afbbe13
 # ╟─810aebe4-2c6e-4ba6-916b-9e4306df33c9
 # ╟─d25c1381-baf1-429b-8150-622b8f731d83
 # ╠═54208d78-cf55-41d7-b4bf-6d1ab4927bbb
