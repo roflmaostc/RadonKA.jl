@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.32
+# v0.19.36
 
 using Markdown
 using InteractiveUtils
@@ -160,6 +160,7 @@ function optimize(img::AbstractArray{T}, θs, μ=nothing; thresholds=(0.65, 0.75
 	end
 	
 	printed = iradon(s, θs, μ)
+	printed ./= maximum(printed)
 	return guess, s, printed, losses
 end 
 
@@ -187,8 +188,8 @@ end
 
 # ╔═╡ 5290976e-f60e-4a02-b58d-f91a870a5f89
 function plot_histogram(img, object_printed, thresholds, chosen_threshold)
-	histogram(object_printed[img .== 0], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution void", ylabel="voxel count", xlabel="normalized intensity",  ylim=(1, 1000000),  yscale=:log10, linewidth=1, legend=:topleft)
-	histogram!(object_printed[img .== 1], bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution object", ylabel="voxel count", xlabel="normalized intensity",  ylim=(1, 1000000), linewidth=1,  yscale=:log10,)
+	plot(object_printed[img .== 0], bins=(0.0:0.01:1),  seriestype=:barhist, xlim=(0.0, 1.0), label="dose distribution void", ylabel="voxel count", xlabel="normalized intensity",  ylim=(10, 1000000),  yscale=:log10, linewidth=1, legend=:topleft)
+	plot!(object_printed[img .== 1], seriestype=:barhist, bins=(0.0:0.01:1), xlim=(0.0, 1.0), label="dose distribution object", ylabel="voxel count", xlabel="normalized intensity",  ylim=(10, 1000000), linewidth=1,  yscale=:log10,)
 	plot!([thresholds[1], thresholds[1]], [1, 10000_000], label="lower threshold", linewidth=3)
 	plot!([thresholds[2], thresholds[2]], [1, 10000_000], label="upper threshold", linewidth=3)
 	#plot!([chosen_threshold, chosen_threshold], [1, 30000000], label="chosen threshold", linewidth=3)
@@ -207,7 +208,13 @@ N_iter = 500
 thresholds = (0.65, 0.75)
 
 # ╔═╡ 96f6eba3-1700-4c29-aff6-5f774d7d4b3b
-@time _, patterns_065_075, printed_065_075, losses_065_075 = Array.(optimize(togoc(img), togoc(angles); N_iter=N_iter, thresholds=(0.65, 0.75)))
+@time _, patterns_065_075, printed_065_075, losses_065_075 = Array.(optimize(togoc(img), togoc(angles); N_iter=20, thresholds=(0.65, 0.75)))
+
+# ╔═╡ 198375e7-6857-4971-92c8-6aec7cb25090
+size(printed_065_075)
+
+# ╔═╡ 4b04002a-449c-46a6-921e-b3fe72395018
+size(patterns_065_075)
 
 # ╔═╡ e55b5e16-1ea1-4cfa-a0df-c32e03848c9f
 errors(printed_065_075, isone.(img), iszero.(img), thresholds)
@@ -217,6 +224,9 @@ errors(printed_065_075, isone.(img), iszero.(img), thresholds)
 
 # ╔═╡ 0ac01881-af91-4067-a216-6cef66d43bc0
 md"Threshold =$thresh1"
+
+# ╔═╡ f6b67921-cf3f-4144-bbdb-3c423d6ee81d
+sum(printed_065_075 .> 0.5)
 
 # ╔═╡ 0c7375cb-2cd1-4ebd-9227-5b561783e37e
 simshow([printed_065_075 printed_065_075 .> thresh1 abs.((printed_065_075 .> thresh1) .- img)])
@@ -230,7 +240,7 @@ end
 
 # ╔═╡ bf5a5074-ad69-4d17-b8de-892688a76891
 begin
-	p = plot_histogram(img, printed_065_075, thresholds, 0.7)
+	p = plot_histogram(img[1:1:end], printed_065_075[1:1:end], thresholds, 0.7)
 	savefig(p, "/tmp/histogram_printed_065_075.pdf")
 	p
 end
@@ -263,6 +273,9 @@ end
 
 # ╔═╡ f2bfcd8f-2e65-4fd4-903b-667171d685ff
 @time _, patterns_065_075_3mu, printed_065_075_3mu, losses_065_075_3mu = Array.(optimize(togoc(img), togoc(angles), 3/ size(img, 1); N_iter=N_iter, thresholds=(0.65, 0.75)))
+
+# ╔═╡ d77c1ac9-9e08-47ca-89db-3680e550eb4e
+simshow(printed_065_075_3mu)
 
 # ╔═╡ d53fcc24-5fee-4e4f-a144-f9fa2b0ee5cb
 errors(printed_065_075_3mu, isone.(img), iszero.(img), thresholds)
@@ -308,20 +321,29 @@ end
 
 
 # ╔═╡ b1309600-9d64-47cb-aaed-86a1fa3a591e
+# ╠═╡ disabled = true
+#=╠═╡
 @time _, patterns_065_075_1mu_long, printed_065_075_1mu_long, losses_065_075_1mu_long = Array.(optimize(togoc(img), togoc(angles), 1/ size(img, 1); N_iter=10_000, thresholds=(0.65, 0.75)))
+  ╠═╡ =#
 
 # ╔═╡ e6329988-a919-4569-9288-b8c4620a2d67
+#=╠═╡
 errors(printed_065_075_1mu_long, isone.(img), iszero.(img), thresholds)
+  ╠═╡ =#
 
 # ╔═╡ a7cc2f68-5592-498c-8891-328f54e35019
+#=╠═╡
 begin
 	p5 = plot_histogram(img, printed_065_075_1mu_long, thresholds, 0.7)
 	savefig(p5, "/tmp/histogram_printed_065_075_1mu_long.pdf")
 	p5
 end
+  ╠═╡ =#
 
 # ╔═╡ 3ef9a22c-ce55-4a90-9a5d-d5a5b835253e
+#=╠═╡
 save("/tmp/patterns_065_075_1mu_long.png",simshow(patterns_065_075_1mu_long, cmap=:turbo))
+  ╠═╡ =#
 
 # ╔═╡ 2a9f6404-50ca-473a-89f7-a55f163e5f61
 save("/tmp/patterns_065_075_1mu.png",simshow(patterns_065_075_1mu, cmap=:turbo))
@@ -333,25 +355,37 @@ save("/tmp/patterns_065_075_1mu.png",simshow(patterns_065_075_1mu, cmap=:turbo))
 
 
 # ╔═╡ adb5d5bb-a925-433b-ba66-c5b7ec4f4d73
+#=╠═╡
 sum(patterns_065_075_1mu_long ./ maximum(patterns_065_075_1mu_long)/ length(patterns_065_075_1mu_long))
+  ╠═╡ =#
 
 # ╔═╡ ef4f6fa4-ee46-47d1-9587-65125609acb2
+#=╠═╡
 sum(patterns_065_075_1mu  ./ maximum(patterns_065_075_1mu) / length(patterns_065_075_1mu_long))
+  ╠═╡ =#
 
 # ╔═╡ 708e26fa-89d1-4821-a9b9-6efce3b27b2b
+#=╠═╡
 sum(patterns_065_075_1mu / length(patterns_065_075_1mu_long))
+  ╠═╡ =#
 
 # ╔═╡ fa62003a-2748-45fe-9b37-7c32d215c49b
+#=╠═╡
 extrema(patterns_065_075_1mu_long)
+  ╠═╡ =#
 
 # ╔═╡ 04bc9aed-dd0d-46bb-a1f8-87a385806127
 maximum(patterns_05_08) / mean(patterns_05_08)
 
 # ╔═╡ 8dbbfc81-7df2-481b-b758-64ed23134f2d
+#=╠═╡
 maximum(patterns_065_075_1mu_long) / mean(patterns_065_075_1mu_long)
+  ╠═╡ =#
 
 # ╔═╡ c41d4159-9c31-4ece-98d2-a38007f1049b
+#=╠═╡
 simshow(patterns_065_075_1mu_long)
+  ╠═╡ =#
 
 # ╔═╡ e99e8aaa-f538-4647-82af-8e85397d43c8
 
@@ -440,9 +474,12 @@ simshow(object_printed_c2 .> 0.75)[:, :, 1]
 # ╠═448f7462-6a87-4ca3-a2a3-0f76934e97a1
 # ╠═aff2fc67-5569-40e6-9ed3-936f16de1aba
 # ╠═96f6eba3-1700-4c29-aff6-5f774d7d4b3b
+# ╠═198375e7-6857-4971-92c8-6aec7cb25090
+# ╠═4b04002a-449c-46a6-921e-b3fe72395018
 # ╠═e55b5e16-1ea1-4cfa-a0df-c32e03848c9f
 # ╟─0ac01881-af91-4067-a216-6cef66d43bc0
 # ╠═1aa687fd-9647-4bce-a800-5cfe6730b28b
+# ╠═f6b67921-cf3f-4144-bbdb-3c423d6ee81d
 # ╠═0c7375cb-2cd1-4ebd-9227-5b561783e37e
 # ╠═c81c9248-29b5-494a-95e1-276a1f8ecfa2
 # ╠═bf5a5074-ad69-4d17-b8de-892688a76891
@@ -453,6 +490,7 @@ simshow(object_printed_c2 .> 0.75)[:, :, 1]
 # ╠═6dd162d4-f099-49f7-860b-dc1e0088090c
 # ╠═0ca23230-da00-43fc-8ad7-c93a0f56e123
 # ╠═f2bfcd8f-2e65-4fd4-903b-667171d685ff
+# ╠═d77c1ac9-9e08-47ca-89db-3680e550eb4e
 # ╠═d53fcc24-5fee-4e4f-a144-f9fa2b0ee5cb
 # ╠═9351709f-7831-433b-839f-84c5b8b315c1
 # ╠═5670277d-65b8-40f1-95a2-78358f082bed
