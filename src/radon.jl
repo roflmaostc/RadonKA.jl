@@ -152,10 +152,10 @@ end
 
 
  # define adjoint rules
-function ChainRulesCore.rrule(::typeof(radon), array::AbstractArray, angles, μ=nothing) 
-    res = radon(array, angles, μ)
+function ChainRulesCore.rrule(::typeof(radon), array::AbstractArray, angles, μ=nothing; ray_endpoints=nothing) 
+    res = radon(array, angles, μ; ray_endpoints)
     function pb_radon(ȳ)
-        ad = iradon(unthunk(ȳ), angles, μ)
+        ad = iradon(unthunk(ȳ), angles, μ; ray_endpoints)
         return NoTangent(), ad, NoTangent(), NoTangent()
     end
     return res, pb_radon 

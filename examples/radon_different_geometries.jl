@@ -13,123 +13,72 @@ begin
 end
 
 # ╔═╡ e3a3dc83-6536-445f-b56b-d8ad62cd9a85
-using TestImages, RadonKA, ImageShow, ImageIO, Noise, PlutoUI, BenchmarkTools
+using TestImages, RadonKA, ImageShow, ImageIO, Noise, PlutoUI, BenchmarkTools, CUDA, Zygote, IndexFunArrays
 
-# ╔═╡ e442d738-7a82-4f51-bb5b-17490401c19a
-# ╠═╡ disabled = true
-#=╠═╡
-angles = [0.0]
-  ╠═╡ =#
+# ╔═╡ f5e6e461-dbd6-4898-a88d-4d3b354812ab
+using Optimization, OptimizationOptimisers, OptimizationOptimJL
 
-# ╔═╡ c1d555be-8380-4df5-8574-69fe19f56f5b
-#smeared = iradon(sinogram, angles, ray_endpoints=range(0, 0, 49))
-
-# ╔═╡ 48be3824-1a8e-495b-8746-a0b09b93f094
-# ╠═╡ disabled = true
-#=╠═╡
-@btime smeared = iradon($sinogram, $angles)
-  ╠═╡ =#
-
-# ╔═╡ 17171a53-b47d-4546-bba9-16a3e75ff9f8
-# ╠═╡ disabled = true
-#=╠═╡
-@btime smeared2 = iradon($sinogram, $angles, ray_endpoints=range(-20, 20, 199))
-  ╠═╡ =#
-
-# ╔═╡ 8b50b28c-7641-4338-bddc-ea52a7a3a8a2
-size(-10:9)
-
-# ╔═╡ 88d2d11a-4e36-4bf7-be8b-246e79f4f165
-Revise.errors()
-
-# ╔═╡ 332045ee-b897-42c1-aee2-775a5b338d94
-
-
-# ╔═╡ 23ee4b67-adef-4f19-a8d6-e49387c43480
-x = randn(Float32, (512, 512))
-
-# ╔═╡ e92cab58-a783-4d12-ae38-f1fd60ce4b90
-angles2 = deg2rad.(range(0, 360, 360))
-
-# ╔═╡ 3ef03b3a-b412-4b6b-893a-f2f7772d319c
-@time smeared = iradon(sinogram, angles)
-
-# ╔═╡ 7e8ea923-3536-4977-ad8d-ff02c1213943
-simshow(smeared, γ=0.1)
-
-# ╔═╡ d627d41d-d363-4c3a-a0d8-e79c6e271b12
-@time smeared2 = iradon(sinogram, angles, ray_endpoints=range(-30, 30, 199))
-
-# ╔═╡ 5688c466-5cb6-4b57-8e84-c39a2a08e5b8
-simshow(smeared2, γ=0.2)
-
-# ╔═╡ f0abe747-5539-4274-b639-f184183eb099
-
-
-# ╔═╡ 5dc20628-490c-4edf-9735-6eae988546e6
-md"# img"
-
-# ╔═╡ 5987412b-b4c9-4da1-b11b-f61ea63494b4
-img = Float32.(testimage("resolution_test_512"));
-
-# ╔═╡ 82cddfda-a315-41aa-8653-d6ea1104f73f
-simshow(img)
-
-# ╔═╡ 16bb225c-1fe6-4e4f-b532-49e73e82f26f
-y_dist_end = range(-10, 10, size(img, 1)-1)
-
-# ╔═╡ 40992985-b12f-47e2-aee6-28730d3e808e
-sinogram2 = radon(img, angles2, ray_endpoints=y_dist_end);
-
-# ╔═╡ a1546c7f-56aa-402b-93db-4474698404c3
-simshow(sinogram2)
-
-# ╔═╡ e29c286d-63ad-4825-a745-0a702e3bf9ac
-img2 = iradon(sinogram2, angles2, ray_endpoints=y_dist_end)
-
-# ╔═╡ 62550c6c-0047-436a-90a1-3b9c2f17a66f
-simshow(img2)
-
-# ╔═╡ 37272216-d78e-42b0-a7f4-1bc8164ae2f2
-simshow(img2 ./ maximum(img2) .- img / maximum(img))
-
-# ╔═╡ 9829fe1e-6b42-4dba-9813-7ec04304e902
-# ╠═╡ disabled = true
-#=╠═╡
+# ╔═╡ 42f31ceb-0f5d-46cc-b868-0314b41a5407
 begin
-	sinogram = zeros(Float32, (199, 1))
-	sinogram[1:3:end, 1] .= 1
+	use_CUDA = Ref(true && CUDA.functional())
+	var"@mytime" = use_CUDA[] ? CUDA.var"@time" : var"@time"
+	togoc(x) = use_CUDA[] ? CuArray(x) : x
 end
-  ╠═╡ =#
 
-# ╔═╡ 6add1095-8a4a-4a11-b368-b50ef87b557c
-sinogram = radon(x, angles2);
+# ╔═╡ 035c5114-7081-490e-b8eb-8e7e1811f344
+img = togoc(Float32.(testimage("resolution_test_512"))[200:421, 200:421]  .* (rr2(Float32, (222, 222)) .< 100^2));
+
+# ╔═╡ a6bdc90f-3c10-4524-9892-6e976d556a95
+simshow(Array(img))
+
+# ╔═╡ 5ef75bb5-5ab0-4e98-9026-a8e2c5b7833d
+angles = togoc(range(0, 2f0 * π, 500));
+
+# ╔═╡ b901a1c4-d346-4cfe-a6db-cae99ae792ca
+ray_endpoints = togoc(range(-30, 30, size(img, 1)-1));
+
+# ╔═╡ 372d0743-2825-4a67-b2ba-588bc6b7d0d5
+measurement = togoc(poisson(Array(radon(img, angles; ray_endpoints)), 2_000_000));
+
+# ╔═╡ f05c24f6-9506-4403-a458-9e201e344757
+simshow(Array(measurement))
+
+# ╔═╡ 4eb50ae4-b5c2-4252-8d80-b758f838a5fb
+opt_f(x, p) = sum(abs2, sqrt.(max.(0, radon(x, angles; ray_endpoints)) .+ 3f0/8f0) .- sqrt.(3f0 / 8f0 .+ measurement))
+
+# ╔═╡ 638561f3-6e6d-4faf-9daa-98694173e0a2
+opt_fun = OptimizationFunction(opt_f, AutoZygote())
+
+# ╔═╡ 4c8c7b5c-7112-4209-8b0b-a2463e2118a9
+init0 = togoc(zeros(Float32, size(img)));
+
+# ╔═╡ 1432bcd6-87b2-4881-867e-b190f8beb140
+opt_f(init0, angles)
+
+# ╔═╡ 1659b97f-d944-418a-adfc-0091a15efc84
+problem = OptimizationProblem(opt_fun, init0, angles);
+
+# ╔═╡ 90a8908a-5f81-40b1-acde-4fefd210709d
+@mytime res = solve(problem, OptimizationOptimJL.LBFGS(), maxiters=20);
+
+# ╔═╡ 925688d4-78b4-404e-b4fd-0be2eaa31235
+simshow(Array(res.u))
 
 # ╔═╡ Cell order:
 # ╠═179d107e-b3be-11ee-0a6c-49f1bf2a10fd
 # ╠═e3a3dc83-6536-445f-b56b-d8ad62cd9a85
-# ╠═e442d738-7a82-4f51-bb5b-17490401c19a
-# ╠═9829fe1e-6b42-4dba-9813-7ec04304e902
-# ╠═c1d555be-8380-4df5-8574-69fe19f56f5b
-# ╠═3ef03b3a-b412-4b6b-893a-f2f7772d319c
-# ╠═48be3824-1a8e-495b-8746-a0b09b93f094
-# ╠═17171a53-b47d-4546-bba9-16a3e75ff9f8
-# ╠═d627d41d-d363-4c3a-a0d8-e79c6e271b12
-# ╠═8b50b28c-7641-4338-bddc-ea52a7a3a8a2
-# ╠═88d2d11a-4e36-4bf7-be8b-246e79f4f165
-# ╠═7e8ea923-3536-4977-ad8d-ff02c1213943
-# ╠═5688c466-5cb6-4b57-8e84-c39a2a08e5b8
-# ╟─332045ee-b897-42c1-aee2-775a5b338d94
-# ╠═23ee4b67-adef-4f19-a8d6-e49387c43480
-# ╠═e92cab58-a783-4d12-ae38-f1fd60ce4b90
-# ╠═6add1095-8a4a-4a11-b368-b50ef87b557c
-# ╠═f0abe747-5539-4274-b639-f184183eb099
-# ╠═5dc20628-490c-4edf-9735-6eae988546e6
-# ╠═5987412b-b4c9-4da1-b11b-f61ea63494b4
-# ╠═82cddfda-a315-41aa-8653-d6ea1104f73f
-# ╠═16bb225c-1fe6-4e4f-b532-49e73e82f26f
-# ╠═40992985-b12f-47e2-aee6-28730d3e808e
-# ╠═a1546c7f-56aa-402b-93db-4474698404c3
-# ╠═e29c286d-63ad-4825-a745-0a702e3bf9ac
-# ╠═62550c6c-0047-436a-90a1-3b9c2f17a66f
-# ╠═37272216-d78e-42b0-a7f4-1bc8164ae2f2
+# ╠═42f31ceb-0f5d-46cc-b868-0314b41a5407
+# ╠═035c5114-7081-490e-b8eb-8e7e1811f344
+# ╠═a6bdc90f-3c10-4524-9892-6e976d556a95
+# ╠═5ef75bb5-5ab0-4e98-9026-a8e2c5b7833d
+# ╠═b901a1c4-d346-4cfe-a6db-cae99ae792ca
+# ╠═372d0743-2825-4a67-b2ba-588bc6b7d0d5
+# ╠═f05c24f6-9506-4403-a458-9e201e344757
+# ╠═f5e6e461-dbd6-4898-a88d-4d3b354812ab
+# ╠═4eb50ae4-b5c2-4252-8d80-b758f838a5fb
+# ╠═638561f3-6e6d-4faf-9daa-98694173e0a2
+# ╠═4c8c7b5c-7112-4209-8b0b-a2463e2118a9
+# ╠═1432bcd6-87b2-4881-867e-b190f8beb140
+# ╠═1659b97f-d944-418a-adfc-0091a15efc84
+# ╠═90a8908a-5f81-40b1-acde-4fefd210709d
+# ╠═925688d4-78b4-404e-b4fd-0be2eaa31235

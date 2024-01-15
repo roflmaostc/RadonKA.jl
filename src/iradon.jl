@@ -172,10 +172,10 @@ end
 
 
  # define adjoint rules
-function ChainRulesCore.rrule(::typeof(iradon), sinogram::AbstractArray, angles, μ=nothing) 
-    res = iradon(sinogram, angles, μ)
+function ChainRulesCore.rrule(::typeof(iradon), sinogram::AbstractArray, angles, μ=nothing; ray_endpoints=nothing) 
+    res = iradon(sinogram, angles, μ; ray_endpoints)
     function pb_iradon(ȳ)
-        ad = radon(unthunk(ȳ), angles, μ)
+        ad = radon(unthunk(ȳ), angles, μ; ray_endpoints)
         return NoTangent(), ad, NoTangent(), NoTangent()
     end
     return res, pb_iradon 
