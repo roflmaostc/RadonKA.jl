@@ -139,10 +139,10 @@ corner of the cell.
 end
 
 
-function next_ray_on_circle(img, angle, y_dist, mid, radius, sinα, cosα)
+@inline function next_ray_on_circle(img, angle, y_dist, y_dist_end, mid, radius, sinα, cosα)
 	x_dist = sqrt(radius^2 - y_dist^2)
-	x_dist_end = -x_dist
-	y_dist_end = y_dist
+    x_dist_end = y_dist == y_dist_end ? -x_dist : -sqrt(radius^2 - y_dist_end^2)
+	y_dist_end = y_dist_end
 	
 	x_dist_rot = mid + cosα * x_dist - sinα * y_dist 
 	y_dist_rot = mid + sinα * x_dist + cosα * y_dist

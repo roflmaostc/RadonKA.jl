@@ -2,12 +2,12 @@ export radon
 
 
 
-radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
-    radon(img, T.(angles), μ)
+radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; ray_endpoints=nothing) where {T, T2} =
+    radon(img, T.(angles), μ; ray_endpoints)
 
 # handle 2D
-radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
-    view(radon(reshape(img, (size(img)..., 1)), T.(angles), μ), :, :, 1)
+radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; ray_endpoints=nothing) where {T, T2} =
+    view(radon(reshape(img, (size(img)..., 1)), T.(angles), μ; ray_endpoints), :, :, 1)
 
 """
     radon(I, θs, μ=nothing)
@@ -47,7 +47,8 @@ julia> radon(arr, [0, π/4, π/2])
  0.0  0.0      0.0
 ```
 """
-function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing) where T
+function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, 
+               μ=nothing; ray_endpoints=nothing) where T
     @assert iseven(size(img, 1)) && iseven(size(img, 2)) && size(img, 1) == size(img, 2) "Arrays has to be quadratic and even sized shape"
     
     backend = KernelAbstractions.get_backend(img)
@@ -73,13 +74,25 @@ function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing
     # mid point, it is actually N ÷ 2 + 1
     # but because of how adress the indices, we need 1.5 instead of +1
     mid = size(img, 1) ÷ 2 + T(1.5)
+
+    if isnothing(ray_endpoints)
+        # the y_dists samplings, in principle we can add this as function parameter
+        y_dists_end = similar(img, (size(img, 1) - 1, ))
+        y_dists_end .= -radius:radius
+    else
+        y_dists_end = similar(img, (size(img, 1) - 1, ))
+        y_dists_end .= ray_endpoints 
+    end
+
+
+
     # the y_dists samplings, in principle we can add this as function parameter 
     y_dists = similar(img, (size(img, 1) - 1, ))
     y_dists .= -radius:radius
     
     #@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
     kernel! = radon_kernel!(backend)
-    kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
+    kernel!(sinogram::AbstractArray{T}, img, y_dists, y_dists_end, angles, mid, radius,
             absorption_f,
     		ndrange=(N, N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
@@ -93,7 +106,7 @@ end
 
 """
 @kernel function radon_kernel!(sinogram::AbstractArray{T},
-			img, y_dists, angles, mid, radius, absorption_f) where T
+			img, y_dists, y_dists_end, angles, mid, radius, absorption_f) where T
     # r is the index of the angles
     # k is the index of the detector spatial coordinate
     # i_z is the index for the z dimension
@@ -103,7 +116,7 @@ end
     sinα, cosα = sincos(angle)
     
     # x0, y0, x1, y1 beginning and end point of each ray
-    a, b, c, d = next_ray_on_circle(img, angle, y_dists[k], mid, radius, sinα, cosα)
+    a, b, c, d = next_ray_on_circle(img, angle, y_dists[k], y_dists_end[k], mid, radius, sinα, cosα)
     a0, b0, c0, d0 = a, b, c, d 
     # different comparisons depending which direction the ray is propagating
     cac = a <= c ? (a,c) -> a<=c : (a,c) -> a>=c
