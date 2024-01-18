@@ -18,13 +18,19 @@ end
 
 # handle 2D
 iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing;
-       ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} =
-    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), T.(angles), μ; ray_startpoints, ray_endpoints), :, :, 1)
+       ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} = begin
+    angles_T = similar(sinogram, (size(angles, 1),))
+    angles_T .= angles 
+    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles_T, μ; ray_startpoints, ray_endpoints), :, :, 1)
+end
+
 
 iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing;
-       ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} =
-    iradon(sinogram, T.(angles), μ; ray_startpoints, ray_endpoints)
-
+       ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} = begin
+    angles_T = similar(sinogram, (size(angles, 1),))
+    angles_T .= angles 
+    iradon(sinogram, angles_T, μ; ray_startpoints, ray_endpoints)
+end
 """
     iradon(sinogram, θs, μ=nothing)
 

@@ -2,13 +2,21 @@ export radon
 
 
 
-radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing; ray_endpoints=nothing) where {T, T2} =
-    radon(img, T.(angles), μ; ray_endpoints)
+radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing;
+      ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} = begin
+    angles_T = similar(img, (size(angles, 1),))
+    angles_T .= angles 
+    radon(img, angles, μ; ray_startpoints, ray_endpoints)
+end
 
 # handle 2D
-radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing; ray_endpoints=nothing) where {T, T2} =
-    view(radon(reshape(img, (size(img)..., 1)), T.(angles), μ; ray_endpoints), :, :, 1)
-
+radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing;
+      ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} = begin
+    angles_T = similar(img, (size(angles, 1),))
+    angles_T .= angles 
+    view(radon(reshape(img, (size(img)..., 1)), angles_T, μ; 
+               ray_startpoints, ray_endpoints), :, :, 1)
+end
 """
     radon(I, θs, μ=nothing)
 
@@ -48,7 +56,7 @@ julia> radon(arr, [0, π/4, π/2])
 ```
 """
 function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, 
-               μ=nothing; ray_endpoints=nothing) where T
+               μ=nothing; ray_startpoints=nothing, ray_endpoints=nothing) where T
     @assert iseven(size(img, 1)) && iseven(size(img, 2)) && size(img, 1) == size(img, 2) "Arrays has to be quadratic and even sized shape"
     
     backend = KernelAbstractions.get_backend(img)
@@ -75,15 +83,23 @@ function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1},
     # but because of how adress the indices, we need 1.5 instead of +1
     mid = size(img, 1) ÷ 2 + T(1.5)
 
-    #if isnothing(ray_endpoints)
+
+    if isnothing(ray_endpoints)
         # the y_dists samplings, in principle we can add this as function parameter
         y_dists_end = similar(img, (size(img, 1) - 1, ))
         y_dists_end .= -radius:radius
-    #else
-    #    y_dists_end = similar(img, (size(img, 1) - 1, ))
-    #    y_dists_end .= ray_endpoints 
-    #end
-
+    else
+        y_dists_end = similar(img, (size(img, 1) - 1, ))
+        y_dists_end .= ray_endpoints 
+    end
+        
+    if isnothing(ray_startpoints)
+        y_dists = similar(img, (size(img, 1) - 1, ))
+        y_dists .= -radius:radius
+    else
+        y_dists = similar(img, (size(img, 1) - 1, ))
+        y_dists .= ray_startpoints 
+    end
 
 
     # the y_dists samplings, in principle we can add this as function parameter 
@@ -152,10 +168,11 @@ end
 
 
  # define adjoint rules
-function ChainRulesCore.rrule(::typeof(radon), array::AbstractArray, angles, μ=nothing; ray_endpoints=nothing) 
-    res = radon(array, angles, μ; ray_endpoints)
+function ChainRulesCore.rrule(::typeof(radon), array::AbstractArray, angles, μ=nothing; 
+                              ray_startpoints=nothing, ray_endpoints=nothing) 
+    res = radon(array, angles, μ; ray_startpoints, ray_endpoints)
     function pb_radon(ȳ)
-        ad = iradon(unthunk(ȳ), angles, μ; ray_endpoints)
+        ad = iradon(unthunk(ȳ), angles, μ; ray_startpoints, ray_endpoints)
         return NoTangent(), ad, NoTangent(), NoTangent()
     end
     return res, pb_radon 
