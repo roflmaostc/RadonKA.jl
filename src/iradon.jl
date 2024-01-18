@@ -18,12 +18,12 @@ end
 
 # handle 2D
 iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing;
-       ray_endpoints=nothing) where {T, T2} =
-    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), T.(angles), μ; ray_endpoints), :, :, 1)
+       ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} =
+    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), T.(angles), μ; ray_startpoints, ray_endpoints), :, :, 1)
 
 iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing;
-                ray_endpoints=nothing) where {T, T2} =
-    iradon(sinogram, T.(angles), μ; ray_endpoints)
+       ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} =
+    iradon(sinogram, T.(angles), μ; ray_startpoints, ray_endpoints)
 
 """
     iradon(sinogram, θs, μ=nothing)
@@ -74,7 +74,7 @@ julia> iradon(arr, [0, π/2], 1) # exponential
 ```
 """
 function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing;
-                ray_endpoints=nothing) where T
+                ray_startpoints=nothing, ray_endpoints=nothing) where T
     @assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
     backend=KernelAbstractions.get_backend(sinogram)
     absorption_f = let μ=μ
@@ -107,9 +107,14 @@ function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=n
         y_dists_end .= ray_endpoints 
     end
         
-    y_dists = similar(img, (size(img, 1) - 1, ))
-    y_dists .= -radius:radius
-    
+    if isnothing(ray_startpoints)
+        y_dists = similar(img, (size(img, 1) - 1, ))
+        y_dists .= -radius:radius
+    else
+        y_dists = similar(img, (size(img, 1) - 1, ))
+        y_dists .= ray_startpoints 
+    end
+
     #@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
     kernel! = iradon_kernel!(backend)
     kernel!(sinogram::AbstractArray{T}, img, y_dists, y_dists_end, angles, mid, radius,

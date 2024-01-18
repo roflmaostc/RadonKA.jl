@@ -75,14 +75,14 @@ function radon(img::AbstractArray{T, 3}, angles::AbstractArray{T, 1},
     # but because of how adress the indices, we need 1.5 instead of +1
     mid = size(img, 1) ÷ 2 + T(1.5)
 
-    if isnothing(ray_endpoints)
+    #if isnothing(ray_endpoints)
         # the y_dists samplings, in principle we can add this as function parameter
         y_dists_end = similar(img, (size(img, 1) - 1, ))
         y_dists_end .= -radius:radius
-    else
-        y_dists_end = similar(img, (size(img, 1) - 1, ))
-        y_dists_end .= ray_endpoints 
-    end
+    #else
+    #    y_dists_end = similar(img, (size(img, 1) - 1, ))
+    #    y_dists_end .= ray_endpoints 
+    #end
 
 
 
