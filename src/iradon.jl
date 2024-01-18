@@ -32,7 +32,7 @@ iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing;
     iradon(sinogram, angles_T, μ; ray_startpoints, ray_endpoints)
 end
 """
-    iradon(sinogram, θs, μ=nothing)
+    iradon(sinogram, θs, μ=nothing; <kwargs>)
 
 Calculates the parallel inverse Radon transform of the `sinogram`.
 The first two dimensions are y and x. The third dimension is z, the rotational axis.
@@ -48,6 +48,15 @@ is always a real center pixel!
 If `μ != nothing`, then the rays are attenuated with `exp(-μ * dist)` where `dist` 
 is the distance to the circular boundary of the field of view.
 `μ` is in units of pixel length. So `μ=1` corresponds to an attenuation of `exp(-1)` if propagated through one pixel.
+
+
+# Keywords
+* `ray_startpoints = -size(img, 1) ÷ 2 - 1: size(img, 1) ÷ 2 - 1`: this indicates the starting position of a ray at the entrance on the array 
+* `ray_endpoints = -size(img, 1) ÷ 2 - 1: size(img, 1) ÷ 2 - 1`: this indicates the end position of a ray at the exit of the array 
+
+Even though we trace everything inside the circle only, start and endpoint of the ray are all the first and last index position in the array.
+So it's not the y position on the circle but rather the y position at the smallest and greatest x value.
+
 
 In principle, all backends of KernelAbstractions.jl should work but are not tested. CUDA and CPU arrays are actively tested.
 
