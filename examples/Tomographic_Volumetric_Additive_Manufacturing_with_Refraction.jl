@@ -28,9 +28,6 @@ using TestImages, RadonKA, ImageShow, ImageIO, Noise, PlutoUI, BenchmarkTools, C
 # ╔═╡ eb4b7177-4f93-4728-8c91-4ff6a86f40cf
 md"# Load packages and check CUDA"
 
-# ╔═╡ be0df011-9ac4-46d7-8963-a8e339af6683
-
-
 # ╔═╡ f3277f00-4162-43b2-98e0-53bcb508df1e
 TableOfContents()
 
@@ -49,10 +46,10 @@ md"""# CUDA is functional: $(CUDA.functional() ? "yes" : "no")"""
 md"# Load JOSS logo as target"
 
 # ╔═╡ f0d86933-5eab-4d86-8909-c51ab9ca99d9
-background = select_region(ImageShow.Gray.(load(download("https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/JOSS.png/459px-JOSS.png"))) .< 0.001, new_size=(700,700));
+background = select_region(ImageShow.Gray.(load(download("https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/JOSS.png/459px-JOSS.png"))) .< 0.001, new_size=(660,660));
 
 # ╔═╡ 36eab63f-5643-4b43-8e12-0f7d971c1040
-img = select_region(.-ImageShow.Gray.(load(download("https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/JOSS.png/459px-JOSS.png"))), new_size=(700,700));
+img = select_region(.-ImageShow.Gray.(load(download("https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/JOSS.png/459px-JOSS.png"))), new_size=(660,660));
 
 # ╔═╡ fc049fbc-4ae7-4256-b39f-27fdff98d45a
 target = togoc(Float32.((img .- background) .> 0.1));
@@ -61,7 +58,12 @@ target = togoc(Float32.((img .- background) .> 0.1));
 simshow(Array(target))
 
 # ╔═╡ 066664f7-9ae5-4a4d-b541-663067cea361
-md"# Specify Angles and ray endpoints"
+md"# Specify Angles and ray endpoints
+
+We consider that we have a vial with outer radius 7mm and a inner radius of 6.5mm. The vial has a refractive index of 1.5 whereas the resin has one of 1.48.
+
+The full derivation of `distort_rays_vial` is linked in this [PDF](https://github.com/roflmaostc/RadonKA.jl/blob/main/docs/src/angle_derivation/refraction_inside_vial_resin.tex).
+"
 
 # ╔═╡ 5ef75bb5-5ab0-4e98-9026-a8e2c5b7833d
 angles = togoc(range(0, 2f0 * π, 700));
@@ -75,9 +77,25 @@ range(-N_s/2 - 1, N_s / 2 - 1, N_s)
 # ╔═╡ 6b91d2bd-1170-4ce5-bb20-10d69f8cd6d7
 md"
 The `ray_startpoints` and `ray_endpoints` indicate each the beginning and end position of the ray.
-
-Each is calculated for the horizontal position on the left of the array and on the right.
 "
+
+# ╔═╡ 8f212882-5a4f-4915-a01a-9c7f342ea1ef
+Rvial = 7f-3
+
+# ╔═╡ 07ff2197-836d-4e9e-b716-4e0eacd89e6e
+Rresin = 6.5f-3
+
+# ╔═╡ 6deeaf05-1008-4f1e-bb33-2b74196c9d80
+nvial = 1.5f0
+
+# ╔═╡ b94f82e8-1c24-46a0-b3e9-f98a0e3e1c12
+nresin = 1.48f0
+
+# ╔═╡ 66a09fd3-545b-4456-be74-6593d2d15a28
+radius_pixel = N_s/2f0
+
+# ╔═╡ 242975ee-277a-4a6a-b329-2a73012ce4bd
+-N_s/2f0 + 1f0
 
 # ╔═╡ ca6ec49d-746e-4b75-ba9e-8252f999c86c
 range(-N_s/2f0 + 1, N_s / 2f0 - 1, N_s)
@@ -85,19 +103,16 @@ range(-N_s/2f0 + 1, N_s / 2f0 - 1, N_s)
 # ╔═╡ af83cb81-49b8-41f4-a24e-c1e33e76d925
 function distort_rays_vial(y::T, Rₒ::T, Rᵢ::T, nvial::T, nresin::T) where T
 	y, Rₒ, Rᵢ, nvial, nresin = 	Float64.((y, Rₒ, Rᵢ, nvial, nresin))
-	function quadratic_solve(a, b, c)
-		(-b - √(b^2 - 4 * a * c)) / 2 / a
-	end
 
 	if iszero(y)
 		return zero(T), zero(T)
 	end
-	
+
 	α = asin(y / Rₒ)
 	β = asin(sin(α) / nvial)
 
 	x = Rₒ * cos(β) - sqrt(Rₒ^2*(cos(β)^2 - 1) + Rᵢ^2) 
-	#quadratic_solve(1, -2 * Rₒ * cos(β), Rₒ^2 - Rᵢ^2)
+
 	ϵ = acos((-Rₒ^2 + x^2 + Rᵢ^2) / 2 / Rᵢ / x) - Float64(π) / 2
 
 	β_ = sign(y) * (Float64(π) / 2 - ϵ)
@@ -119,7 +134,11 @@ function distort_rays_vial(y::T, Rₒ::T, Rᵢ::T, nvial::T, nresin::T) where T
 end
 
 # ╔═╡ 6721b65f-48ed-4dc7-99dd-c460bb124c1e
-ray_points = distort_rays_vial.(range(-N_s/2f0 + 1f0, N_s / 2f0 - 1f0, N_s), 350.0f0, 345.0f0, 1.5f0, 1.45f0)
+ray_points = distort_rays_vial.(range(-N_s/2f0 + 1f0, N_s / 2f0 - 1f0, N_s),
+	radius_pixel, 
+	radius_pixel / Rvial * Rresin, 
+	nvial,
+	nresin)
 
 # ╔═╡ 76b4c0de-af7a-456e-8d49-04f10a0a17fb
 ray_startpoints, ray_endpoints = map(first, ray_points), map(x->x[2], ray_points)
@@ -143,7 +162,7 @@ end;
 Revise.errors()
 
 # ╔═╡ 85b6e54c-3256-4ba8-9889-56be82de0203
-simshow(Array(iradon(togoc(sinogram), togoc(range(0, 2π, kk + 1)[1:end-1]), 0.008f0; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), γ=0.1)
+simshow(Array(iradon(togoc(sinogram), togoc(range(0, 2π, kk + 1)[1:end-1]), 0.008f0; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), γ=0.6)
 
 # ╔═╡ 5d55464f-c7d9-4e45-a1e7-907c2137be95
 md"# Define Optimization algorithm
@@ -246,7 +265,6 @@ plot_histogram(Array(target), Array(printed), (0.65, 0.75))
 # ╠═179d107e-b3be-11ee-0a6c-49f1bf2a10fd
 # ╟─eb4b7177-4f93-4728-8c91-4ff6a86f40cf
 # ╠═e3a3dc83-6536-445f-b56b-d8ad62cd9a85
-# ╠═be0df011-9ac4-46d7-8963-a8e339af6683
 # ╠═f3277f00-4162-43b2-98e0-53bcb508df1e
 # ╠═42f31ceb-0f5d-46cc-b868-0314b41a5407
 # ╟─78746412-00f2-40ad-9d24-e884d8dd7e77
@@ -260,7 +278,13 @@ plot_histogram(Array(target), Array(printed), (0.65, 0.75))
 # ╠═5aa03590-c552-410e-93aa-1e47dabd2f9e
 # ╠═9d582f0d-7da4-41db-9369-fef7a6dbe590
 # ╟─6b91d2bd-1170-4ce5-bb20-10d69f8cd6d7
+# ╠═8f212882-5a4f-4915-a01a-9c7f342ea1ef
+# ╠═07ff2197-836d-4e9e-b716-4e0eacd89e6e
+# ╠═6deeaf05-1008-4f1e-bb33-2b74196c9d80
+# ╠═b94f82e8-1c24-46a0-b3e9-f98a0e3e1c12
+# ╠═66a09fd3-545b-4456-be74-6593d2d15a28
 # ╠═6721b65f-48ed-4dc7-99dd-c460bb124c1e
+# ╠═242975ee-277a-4a6a-b329-2a73012ce4bd
 # ╠═ca6ec49d-746e-4b75-ba9e-8252f999c86c
 # ╠═76b4c0de-af7a-456e-8d49-04f10a0a17fb
 # ╠═63c4907f-ba79-4b07-a079-1f12e1491bba
@@ -273,7 +297,7 @@ plot_histogram(Array(target), Array(printed), (0.65, 0.75))
 # ╟─5d55464f-c7d9-4e45-a1e7-907c2137be95
 # ╠═697d4c7d-697b-452c-8a6a-25f2a1089529
 # ╠═624858de-e7da-4e3c-91b5-6ab7b5e645d5
-# ╠═d80f6c47-1c55-4a7e-9374-104806873a9a
+# ╟─d80f6c47-1c55-4a7e-9374-104806873a9a
 # ╠═2ca8698e-3ff8-445c-a5e3-3a20d2e2afc3
 # ╠═03223eb4-3c15-4899-93bf-5440fb6b5c7a
 # ╠═ec528b63-95eb-430b-b683-04e207dd61f0
