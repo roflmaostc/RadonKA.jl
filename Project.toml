@@ -1,7 +1,7 @@
 name = "RadonKA"
 uuid = "86de8297-835b-47df-b249-c04e8db91db5"
 authors = ["Felix Wechsler (roflmaostc) <fxw+git@mailbox.org>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Atomix = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
@@ -13,11 +13,12 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 
 [compat]
 Atomix = "0.1"
+ChainRulesCore = "1"
 FFTW = "1.7"
 IndexFunArrays = "0.2"
 KernelAbstractions = "0.9"
 PrecompileTools = "1.2"
-julia = "1.9"
+julia = "1"
 
 [extras]
 ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
