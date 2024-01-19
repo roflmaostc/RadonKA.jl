@@ -39,6 +39,7 @@ begin
 	use_CUDA = Ref(CUDA.functional())
 	var"@mytime" = use_CUDA[] ? CUDA.var"@time" : var"@time"
 	togoc(x) = use_CUDA[] ? CuArray(x) : x
+	togoc(x::AbstractArray{Float64}) = use_CUDA[] ? CuArray(Float32.(x)) : x
 end
 
 # ╔═╡ 78746412-00f2-40ad-9d24-e884d8dd7e77
@@ -63,7 +64,7 @@ simshow(Array(target))
 md"# Specify Angles and ray endpoints"
 
 # ╔═╡ 5ef75bb5-5ab0-4e98-9026-a8e2c5b7833d
-angles = togoc(range(0, 2f0 * π, 1000));
+angles = togoc(range(0, 2f0 * π, 700));
 
 # ╔═╡ 5aa03590-c552-410e-93aa-1e47dabd2f9e
 N_s = size(target,1) - 1
@@ -78,49 +79,71 @@ The `ray_startpoints` and `ray_endpoints` indicate each the beginning and end po
 Each is calculated for the horizontal position on the left of the array and on the right.
 "
 
+# ╔═╡ ca6ec49d-746e-4b75-ba9e-8252f999c86c
+range(-N_s/2f0 + 1, N_s / 2f0 - 1, N_s)
+
 # ╔═╡ af83cb81-49b8-41f4-a24e-c1e33e76d925
-function distort_rays_vial(ys, R_outer, R_inner, n_vial, n_resin)
-	#R₁ ist R_outer
-	#R₂ is R_inner
+function distort_rays_vial(y::T, Rₒ::T, Rᵢ::T, nvial::T, nresin::T) where T
+	y, Rₒ, Rᵢ, nvial, nresin = 	Float64.((y, Rₒ, Rᵢ, nvial, nresin))
 	function quadratic_solve(a, b, c)
 		(-b - √(b^2 - 4 * a * c)) / 2 / a
 	end
-	
-	αs = asin.(ys ./ R_outer)
-	βs = asin.(sin.(αs) ./ n_vial)
-	xs = quadratic_solve.(1, -2 .* R_outer .* cos.(βs), R_outer^2 - R_inner^2)
-	ϵs = acos.((-R_outer^2 .+ xs.^2 .+ R_inner^2) ./ 2 ./ R_inner ./ xs) .- π / 2
 
-	β₂s = sign.(ys) .* (π / 2 .- ϵs)
-	γs = asin.(n_vial .* sin.(β₂s) ./ n_resin)
+	if iszero(y)
+		return zero(T), zero(T)
+	end
 	
-	y₂s = sin.(γs) .* R_inner
-	δ₁s = αs - βs
-	δ₂s = β₂s - γs
-	δ_ges = δ₁s + δ₂s
+	α = asin(y / Rₒ)
+	β = asin(sin(α) / nvial)
 
-	Δh = sin.(δ₁s) .* xs
-	Δxs = R_outer .- sqrt.(R_outer.^2 .- ys.^2)
-	Δx2s = sqrt.(xs.^2 .- Δh.^2)
-	y3s = tan.(δ₁s .+ δ₂s) .* (2*R_outer .- Δxs .- Δx2s)
-	y4s = ys .- Δh .- y3s
-	return ys .- Δh, y4s
+	x = Rₒ * cos(β) - sqrt(Rₒ^2*(cos(β)^2 - 1) + Rᵢ^2) 
+	#quadratic_solve(1, -2 * Rₒ * cos(β), Rₒ^2 - Rᵢ^2)
+	ϵ = acos((-Rₒ^2 + x^2 + Rᵢ^2) / 2 / Rᵢ / x) - Float64(π) / 2
+
+	β_ = sign(y) * (Float64(π) / 2 - ϵ)
+	γ = asin(nvial * sin(β_) / nresin)
+	
+	δ₁ = α - β
+	δ₂ = β_ - γ
+	δ_ges = δ₁ + δ₂
+
+	y_ = abs(Rᵢ * sin(γ))
+	p = sqrt(Rₒ^2 - y_^2)
+
+	η = - (asin(p / Rₒ) - sign(y) * (Float64(π)/2 - δ_ges))
+	yf = Rₒ * sin(η)
+	
+	yi = 2 * p * sin(δ_ges) + yf
+	
+	return T(yi), T(yf)
 end
 
 # ╔═╡ 6721b65f-48ed-4dc7-99dd-c460bb124c1e
-ray_startpoints, ray_endpoints = distort_rays_vial(range(-N_s/2 + 1, N_s / 2 - 1, N_s), 350, 340, 1.5, 1.4)
+ray_points = distort_rays_vial.(range(-N_s/2f0 + 1f0, N_s / 2f0 - 1f0, N_s), 350.0f0, 345.0f0, 1.5f0, 1.45f0)
+
+# ╔═╡ 76b4c0de-af7a-456e-8d49-04f10a0a17fb
+ray_startpoints, ray_endpoints = map(first, ray_points), map(x->x[2], ray_points)
+
+# ╔═╡ 63c4907f-ba79-4b07-a079-1f12e1491bba
+distort_rays_vial(0.0002, 10.0, 9.8, 1.2, 1.1)
 
 # ╔═╡ 4cdc5592-3b92-4e98-8718-d77dd939ebf1
 md"## Ray distribution inside vial"
 
+# ╔═╡ 494c5b20-0af2-4903-959c-812459877c31
+kk = 1
+
 # ╔═╡ dc22dead-1b83-4787-a147-9811136af085
 begin
-	sinogram = zeros((size(target,1)-1, 1))
-	sinogram[1:5:end] .= 1
-end
+	sinogram = zeros((size(target,1)-1, kk))
+	sinogram[1:1:end,:] .= 1
+end;
 
-# ╔═╡ 2f582074-44a6-405e-b572-4ed3819b3706
-simshow(iradon(sinogram, [0.0]; ray_endpoints), γ=0.2)
+# ╔═╡ e10549a7-0f31-48fa-8d38-820907d8554e
+Revise.errors()
+
+# ╔═╡ 85b6e54c-3256-4ba8-9889-56be82de0203
+simshow(Array(iradon(togoc(sinogram), togoc(range(0, 2π, kk + 1)[1:end-1]), 0.008f0; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), γ=0.1)
 
 # ╔═╡ 5d55464f-c7d9-4e45-a1e7-907c2137be95
 md"# Define Optimization algorithm
@@ -146,7 +169,7 @@ end
 # see https://www.sciencedirect.com/science/article/abs/pii/S2214860421005212
 function OSMO(img::AbstractArray{T}, θs, μ=nothing; 
 			  thresholds=(0.65, 0.75), N_iter = 2,
-				ray_startpoints, ray_endpoints) where T
+				ray_startpoints=nothing, ray_endpoints=nothing) where T
 	N = size(img, 1)
 	guess = copy(img)
 
@@ -174,15 +197,12 @@ With a decent GPU (such as RTX 3060) it should take around ~20-30s.
 With a 12 core multithreaded CPU around ~15min.
 "
 
-# ╔═╡ 42f6a082-66e0-4b0f-a962-c0e09c614e45
-@mytime a_object, patterns, printed = OSMO(target, angles, 1/350f0; N_iter=300, ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints),
-)
-
-# ╔═╡ 05068957-20f4-4005-98e1-3f6eb19558a7
-
+# ╔═╡ 2ca8698e-3ff8-445c-a5e3-3a20d2e2afc3
+@mytime a_object, patterns, printed = OSMO(target, angles, 1/350f0; N_iter=200,
+							ray_startpoints=togoc(ray_startpoints),ray_endpoints=togoc(ray_endpoints))
 
 # ╔═╡ ec528b63-95eb-430b-b683-04e207dd61f0
-simshow(Array(printed) .> 0.7, cmap=:turbo)
+simshow((Array(printed) .> 0.7) .- 0 .* Array(target), cmap=:turbo)
 
 # ╔═╡ 43e4b941-b838-483d-9a8f-8897720f8b90
 simshow(Array(printed), cmap=:turbo)
@@ -197,7 +217,7 @@ simshow(Array(iradon(patterns[:, 306:306], togoc(angles[306:306]), 1/350f0 ; ray
 simshow(Array(iradon(patterns[:, 1:1], togoc(angles[1:1]), 1/350f0 ; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), cmap=:turbo)
 
 # ╔═╡ 88895d8d-432e-4337-a51c-12ac4e4a4325
-@bind i Slider(1:800, show_value=true)
+@bind i Slider(1:size(angles,1), show_value=true)
 
 # ╔═╡ 61048e10-8e23-41a6-8c49-0b1a8c0adc24
 simshow(Array(iradon(patterns[:, i:i], togoc(angles[i:i]), 1/350f0 ; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), cmap=:turbo)
@@ -241,16 +261,20 @@ plot_histogram(Array(target), Array(printed), (0.65, 0.75))
 # ╠═9d582f0d-7da4-41db-9369-fef7a6dbe590
 # ╟─6b91d2bd-1170-4ce5-bb20-10d69f8cd6d7
 # ╠═6721b65f-48ed-4dc7-99dd-c460bb124c1e
+# ╠═ca6ec49d-746e-4b75-ba9e-8252f999c86c
+# ╠═76b4c0de-af7a-456e-8d49-04f10a0a17fb
+# ╠═63c4907f-ba79-4b07-a079-1f12e1491bba
 # ╠═af83cb81-49b8-41f4-a24e-c1e33e76d925
 # ╟─4cdc5592-3b92-4e98-8718-d77dd939ebf1
 # ╠═dc22dead-1b83-4787-a147-9811136af085
-# ╠═2f582074-44a6-405e-b572-4ed3819b3706
+# ╠═494c5b20-0af2-4903-959c-812459877c31
+# ╠═e10549a7-0f31-48fa-8d38-820907d8554e
+# ╠═85b6e54c-3256-4ba8-9889-56be82de0203
 # ╟─5d55464f-c7d9-4e45-a1e7-907c2137be95
 # ╠═697d4c7d-697b-452c-8a6a-25f2a1089529
 # ╠═624858de-e7da-4e3c-91b5-6ab7b5e645d5
 # ╠═d80f6c47-1c55-4a7e-9374-104806873a9a
-# ╠═42f6a082-66e0-4b0f-a962-c0e09c614e45
-# ╠═05068957-20f4-4005-98e1-3f6eb19558a7
+# ╠═2ca8698e-3ff8-445c-a5e3-3a20d2e2afc3
 # ╠═03223eb4-3c15-4899-93bf-5440fb6b5c7a
 # ╠═ec528b63-95eb-430b-b683-04e207dd61f0
 # ╠═43e4b941-b838-483d-9a8f-8897720f8b90
@@ -258,6 +282,6 @@ plot_histogram(Array(target), Array(printed), (0.65, 0.75))
 # ╠═28d8c378-b818-4d61-b9d4-a06ad7cc21e3
 # ╠═beb61bb1-3f7c-4301-92ca-5418bc0445cf
 # ╠═61048e10-8e23-41a6-8c49-0b1a8c0adc24
-# ╟─88895d8d-432e-4337-a51c-12ac4e4a4325
+# ╠═88895d8d-432e-4337-a51c-12ac4e4a4325
 # ╠═21c0b369-a4b2-43ea-87b8-702474d88584
 # ╠═b53c8016-177f-4b1b-b07d-48cbd2b2fc65
