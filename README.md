@@ -60,6 +60,9 @@ File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](htt
 There is [TIGRE](https://github.com/CERN/TIGRE) and [ASTRA](https://github.com/astra-toolbox/astra-toolbox) which both offer more functionality for classic CT problems.
 They also feature GPU acceleration, however we did not observe that they outperform this package. Also, they don't allow to calculate the attenuated Radon transform
 and don't allow for arbitrary ray geometries, as we do.
+The fastest imlementation we found, is the [unmaintained torch-radon](https://github.com/matteo-ronchetti/torch-radon). Its kernels are written in CUDA C code and offer a PyTorch interface.
+There is a [torch-radon fork](https://github.com/carterbox/torch-radon) which allows to run it with newer versions. It offers no attenuated Radon transform.
+
 
 ## Julia
 There exists [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) and in general the whole [JuliaImageRecon](https://github.com/JuliaImageRecon) organization.
