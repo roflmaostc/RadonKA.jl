@@ -23,7 +23,7 @@
 \begin{document}
 
 \noindent In the following we derive analytical expressions for $y_i$ and $y_f$. 
-Those values are needed to specify entrance and endpoint of the rays at the outer circle \texttt{RadonKA.jl}\footnote{\url{www.github.com/roflmaostc/RadonKA.jl}}.
+Those values are needed to specify entrance and endpoint of the rays at the outer circle (API by \texttt{RadonKA.jl}\footnote{\url{www.github.com/roflmaostc/RadonKA.jl}}).
 Given the circular shaped vial, the angle under which a ray hits the vial is $\alpha = \arcsin(y / R_o)$. Consequently, because of refraction we obtain $\beta=\arcsin(\sin(\alpha) / n_\text{vial})$.
 The orange segment $x$ is more inconvenient to derive but the law of cosines of triangles provides us with 
 \begin{equation}
@@ -31,7 +31,7 @@ The orange segment $x$ is more inconvenient to derive but the law of cosines of 
 \end{equation}
 Solving the quadratic equation, the meaningful solution is
 \begin{equation}
-    x = R_o \cdot \cos{\beta} -  \sqrt{\frac12 R_o^2 (1+\cos(2\beta)) - R_i^2}.
+    x = R_o \cdot \cos{\beta} -  \sqrt{R_o^2 \cdot (\cos(\beta)^2 - 1) + R_i^2}.
 \end{equation}
 Again, applying law of cosine we can obtain an expression for
 \begin{equation}
@@ -209,7 +209,7 @@ Because of the isosceles triangle, the height of the virtual ray entering the ou
     \end{scope}
 
 \end{tikzpicture}
-    \caption{Full description of the path of a ray because of refraction at vial and resin interface.}
+    \caption{Full description of the ray path because of refraction at vial and resin interface.}
     \label{fig:refraction}
 \end{figure}
 \end{document}
