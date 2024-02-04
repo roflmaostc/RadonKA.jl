@@ -11,8 +11,21 @@ using PrecompileTools
 include("utils.jl")
 include("radon.jl")
 include("iradon.jl")
+include("radon_new.jl")
 
 
+export RadonGeometry, RadonParallelCircle
+
+abstract type RadonGeometry end
+
+struct RadonParallelCircle{T} <: RadonGeometry
+    in_height::AbstractVector{T}
+end
+
+struct RadonFlexibleCircle{T} <: RadonGeometry
+    in_height::AbstractVector{T}
+    out_height::AbstractVector{T}
+end
 
 
 @setup_workload begin

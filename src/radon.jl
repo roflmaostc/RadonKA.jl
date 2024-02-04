@@ -6,7 +6,7 @@ radon(img::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing;
       ray_startpoints=nothing, ray_endpoints=nothing) where {T, T2} = begin
     angles_T = similar(img, (size(angles, 1),))
     angles_T .= angles 
-    radon(img, angles, μ; ray_startpoints, ray_endpoints)
+    radon(img, angles_T, μ; ray_startpoints, ray_endpoints)
 end
 
 # handle 2D
@@ -141,7 +141,7 @@ end
     sinα, cosα = sincos(angle)
     
     # x0, y0, x1, y1 beginning and end point of each ray
-    a, b, c, d = next_ray_on_circle(img, angle, y_dists[k], y_dists_end[k], mid, radius, sinα, cosα)
+    a, b, c, d = next_ray_on_circle(y_dists[k], y_dists_end[k], mid, radius, sinα, cosα)
     a0, b0, c0, d0 = a, b, c, d 
     # different comparisons depending which direction the ray is propagating
     cac = a <= c ? (a,c) -> a<=c : (a,c) -> a>=c
