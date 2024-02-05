@@ -12,17 +12,30 @@ include("utils.jl")
 include("radon.jl")
 include("iradon.jl")
 include("radon_new.jl")
+include("iradon_new.jl")
 
 
 export RadonGeometry, RadonParallelCircle
 
 abstract type RadonGeometry end
 
+"""
+    RadonParallelCircle(N, in_height)
+
+`N` is the size of the first and second dimension of the array.
+`in_height` is a vector or range indicating the positions of the detector
+with respect to the midpoint which is located at `N ÷ 2 + 1`.
+
+So an array of size `N=10` the default definition is: `RadonParallelCircle(10, -4:4)`
+So the resulting sinogram has the shape: `(9, length(angles), size(array, 3))`
+"""
 struct RadonParallelCircle{T} <: RadonGeometry
+    N::Int
     in_height::AbstractVector{T}
 end
 
 struct RadonFlexibleCircle{T} <: RadonGeometry
+    N::Int
     in_height::AbstractVector{T}
     out_height::AbstractVector{T}
 end

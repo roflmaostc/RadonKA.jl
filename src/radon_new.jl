@@ -11,9 +11,9 @@ end
 
 
 # handle 2D
-function radon(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1};
-        geometry=RadonParallelCircle(-(size(img,1)-1)÷2:(size(img,1)-1)÷2), μ=nothing) where {T, T2}
-    view(radon(reshape(img, (size(img)..., 1)), angles; geometry, μ), :, :, 1)
+function radon2(img::AbstractArray{T, 2}, angles::AbstractArray{T2, 1};
+        geometry=RadonParallelCircle(size(img, 1), -(size(img,1)-1)÷2:(size(img,1)-1)÷2), μ=nothing) where {T, T2}
+    view(radon2(reshape(img, (size(img)..., 1)), angles; geometry, μ), :, :, 1)
 end
 
 
@@ -62,29 +62,32 @@ julia> radon(arr, [0, π/4, π/2])
  0.0  0.0      0.0
 ```
 """
-function radon2(img::AbstractArray{T, 3}, angles_T::AbstractArray{T, 1};
-        geometry=RadonParallelCircle(-(size(img,1)-1)÷2:(size(img,1)-1)÷2),
-        μ=nothing) where T
+function radon2(img::AbstractArray{T, 3}, angles_T::AbstractVector;
+        geometry=RadonParallelCircle(size(img, 1), -(size(img,1)-1)÷2:(size(img,1)-1)÷2),
+        μ=nothing) where  {T}
     @assert size(img, 1) == size(img, 2) "Arrays has to be quadratically shaped"
+    @assert size(img, 1) == geometry.N
     backend = KernelAbstractions.get_backend(img)
  
+    @show geometry
     # angles_T might be a normal vector instead of Cuvector. fix it. 
     angles = similar(img, (size(angles_T, 1),))
     angles .= typeof(angles)(angles_T) 
 
 
     # geometry can be very densely sampled, hence the sinogram depends on geometry size
-    N = length(geometry.in_height)
+    N_sinogram = length(geometry.in_height)
     # we only propagate inside this in circle
     # convert radius to correct float type, very important for performance!
     radius = T((size(img, 1) - 1) ÷ 2)
+    @show radius 
     # the midpoint of the array
     # convert to good type
     mid = T(size(img, 1) ÷ 2 + 1 +  1 // 2)
     N_angles = length(angles)
 
     # final sinogram
-    sinogram = similar(img, (N, N_angles, size(img, 3)))
+    sinogram = similar(img, (N_sinogram, N_angles, size(img, 3)))
     fill!(sinogram, 0)
 
     # create an absorption function, maps just to 1 in case isnothing(μ)
@@ -93,19 +96,19 @@ function radon2(img::AbstractArray{T, 3}, angles_T::AbstractArray{T, 1};
     # of the kernel goes
     kernel! = radon_kernel2!(backend)
     kernel!(sinogram::AbstractArray{T}, img, geometry.in_height, angles, mid, radius, absorb_f,
-    		ndrange=(N, N_angles, size(img, 3)))
+    		ndrange=(N_sinogram, N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
     return sinogram
 end
 
 @inline inside_circ(ii, jj, mid, radius) = (ii - mid)^2 + (jj - mid)^2 ≤ radius ^2 
 
-@kernel function radon_kernel2!(sinogram::AbstractArray{T}, img, in_height, angles, mid, radius, absorb_f, ::Type{IT}) where {T, IT}
+@kernel function radon_kernel2!(sinogram::AbstractArray{T}, img, in_height, angles, mid, radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
-    sinα, cosα = sincos(angles[iangle])
+    @inbounds sinα, cosα = sincos(angles[iangle])
 
-    xend, yend = T(size(img, 2)), T(in_height[i])
+    @inbounds xend, yend = T(size(img, 2)), T(in_height[i])
 
     # map the detector positions on a circle
     # also rotate according to the angle
