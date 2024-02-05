@@ -69,7 +69,6 @@ function radon2(img::AbstractArray{T, 3}, angles_T::AbstractVector;
     @assert size(img, 1) == geometry.N
     backend = KernelAbstractions.get_backend(img)
  
-    @show geometry
     # angles_T might be a normal vector instead of Cuvector. fix it. 
     angles = similar(img, (size(angles_T, 1),))
     angles .= typeof(angles)(angles_T) 
@@ -80,7 +79,6 @@ function radon2(img::AbstractArray{T, 3}, angles_T::AbstractVector;
     # we only propagate inside this in circle
     # convert radius to correct float type, very important for performance!
     radius = T((size(img, 1) - 1) ÷ 2)
-    @show radius 
     # the midpoint of the array
     # convert to good type
     mid = T(size(img, 1) ÷ 2 + 1 +  1 // 2)
@@ -103,7 +101,7 @@ end
 
 @inline inside_circ(ii, jj, mid, radius) = (ii - mid)^2 + (jj - mid)^2 ≤ radius ^2 
 
-@kernel function radon_kernel2!(sinogram::AbstractArray{T}, img, in_height, angles, mid, radius, absorb_f) where {T}
+@kernel function radon_kernel2!(sinogram::AbstractArray{T}, img::AbstractArray{T}, in_height, angles, mid, radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])

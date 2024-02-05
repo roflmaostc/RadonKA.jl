@@ -71,6 +71,33 @@ simshow(img2[:, :, 1])
 # ╔═╡ c508389f-a605-4457-9360-410a8021b46c
 Revise.errors()
 
+# ╔═╡ c4a249b8-ac6d-4389-91c0-7df12954871f
+@time RadonKA.radon2(randn(Float32, (100, 100)), range(0, 2*π, 100))
+
+# ╔═╡ 29a1afa0-7225-4851-98b1-17b06606ba3a
+Revise.errors()
+
+# ╔═╡ aab7ddad-8c54-4c6c-9096-0f043dc2716a
+x = abs.(ones((100,100)))
+
+# ╔═╡ e575b9c3-5410-4e9f-9ccf-7809edae4721
+a = [0]
+
+# ╔═╡ 80532842-b487-4cc1-9798-f0aa3762034a
+simshow(x)
+
+# ╔═╡ bbbc01c6-c70d-42bf-969b-7b4fc4bbdfd6
+g = RadonParallelCircle(size(x,1), -(size(x,1)-1)÷2:(size(x,1)-1)÷2)
+
+# ╔═╡ 46956618-d12f-4096-a91d-e4fdfa32a7c7
+simshow(iradon2(radon2(x, a; geometry=g), a; geometry=g, μ=1/30))
+
+# ╔═╡ 57fca1d7-cf47-4a59-afc8-bf27497d27e4
+Revise.errors()
+
+# ╔═╡ 29ea08cf-f148-4ad6-aad1-f11d51cdfe82
+
+
 # ╔═╡ ae0912af-af3a-4049-ba7e-6a4d6d61af35
 Revise.errors()
 
@@ -178,8 +205,20 @@ end;
 # ╔═╡ dccc67e0-411f-40d8-b28b-33a1701230bc
 @benchmark RadonKA.radon($img, Float32.(range(0, 2*π, 100)))
 
+# ╔═╡ 72074d52-9ce0-4a1c-9b02-cbc593fadf66
+sinogram = @time RadonKA.radon2(img, Float32.(range(0, 2*π, 100)));
+
+# ╔═╡ b5f14855-5f26-490e-92cc-e5345d024a70
+simshow(iradon(sinogram, range(0, 2*π, 100)))[:, :, 1]
+
+# ╔═╡ 7185a544-8a84-426b-bb3f-7b227ca865ff
+simshow(iradon2(sinogram, range(0, 2*π, 100)))[:, :, 1]
+
 # ╔═╡ d12b4d0f-dea0-448e-9982-6d1d8c410bf8
 @benchmark RadonKA.radon2($img, Float32.(range(0, 2*π, 100)))
+
+# ╔═╡ ce5aa941-b7bb-41f9-96b4-b6e1fe052bc2
+@benchmark RadonKA.radon($img, Float32.(range(0, 2*π, 100)))
 
 # ╔═╡ 7ad93d26-6041-46ed-9fb9-d116ea2e5608
 @benchmark RadonKA.radon2($img, Float32.(range(0, 2*π, 100)))
@@ -217,6 +256,12 @@ img_c
 
 # ╔═╡ b87ee00b-d071-41be-a2c1-f7c32b6105e6
 @benchmark CUDA.@sync RadonKA.radon($img_c, CuArray(range(0, 2*π, 100)))
+
+# ╔═╡ 4e6924ba-c877-4e31-9e92-425dfbd0c3c6
+sinogramc = RadonKA.radon2(img_c, CuArray(range(0f0, 2f0*π, 100)))
+
+# ╔═╡ c0cd7d00-ae6e-4ba8-aad6-5b1c9c63736e
+@benchmark CUDA.@sync RadonKA.iradon2($sinogramc, CuArray(range(0f0, 2f0*π, 100)))
 
 # ╔═╡ 0cd70b79-b526-46c5-9f34-8056d1a3478a
 @benchmark CUDA.@sync RadonKA.radon2($img_c, CuArray(range(0f0, 2f0*π, 100)))
@@ -274,8 +319,23 @@ simshow(img[:, :, 1])
 # ╠═c508389f-a605-4457-9360-410a8021b46c
 # ╠═aecb76ad-d6a2-4d73-b8d5-8327e2448d5b
 # ╠═dccc67e0-411f-40d8-b28b-33a1701230bc
+# ╠═c4a249b8-ac6d-4389-91c0-7df12954871f
+# ╠═29a1afa0-7225-4851-98b1-17b06606ba3a
+# ╠═aab7ddad-8c54-4c6c-9096-0f043dc2716a
+# ╠═e575b9c3-5410-4e9f-9ccf-7809edae4721
+# ╠═80532842-b487-4cc1-9798-f0aa3762034a
+# ╠═bbbc01c6-c70d-42bf-969b-7b4fc4bbdfd6
+# ╠═46956618-d12f-4096-a91d-e4fdfa32a7c7
+# ╠═b5f14855-5f26-490e-92cc-e5345d024a70
+# ╠═7185a544-8a84-426b-bb3f-7b227ca865ff
+# ╠═72074d52-9ce0-4a1c-9b02-cbc593fadf66
+# ╠═57fca1d7-cf47-4a59-afc8-bf27497d27e4
 # ╠═d12b4d0f-dea0-448e-9982-6d1d8c410bf8
+# ╠═ce5aa941-b7bb-41f9-96b4-b6e1fe052bc2
 # ╠═b87ee00b-d071-41be-a2c1-f7c32b6105e6
+# ╠═29ea08cf-f148-4ad6-aad1-f11d51cdfe82
+# ╠═4e6924ba-c877-4e31-9e92-425dfbd0c3c6
+# ╠═c0cd7d00-ae6e-4ba8-aad6-5b1c9c63736e
 # ╠═0cd70b79-b526-46c5-9f34-8056d1a3478a
 # ╠═08e670a7-4d64-4a01-acc8-35a2f4fc7401
 # ╠═1414d566-24d5-4d79-8806-9f3d42f9bbff

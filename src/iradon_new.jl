@@ -2,8 +2,8 @@ export iradon2
 
 # handle 2D
 function iradon2(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1};
-        geometry=RadonParallelCircle(size(sinogram,1) + 1,-(size(sinogram + 1,1)-1)÷2:(size(img,1)-1)÷2), μ=nothing) where {T, T2}
-    view(iradon2(reshape(sinogram, (size(sinogram)..., 1)), angles_T; geometry, μ), :, :, 1)
+        geometry=RadonParallelCircle(size(sinogram,1) + 1,-(size(sinogram,1))÷2:(size(sinogram,1))÷2), μ=nothing) where {T, T2}
+    view(iradon2(reshape(sinogram, (size(sinogram)..., 1)), angles; geometry, μ), :, :, 1)
 end
 
 
@@ -39,8 +39,6 @@ function iradon2(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
     mid = T(N ÷ 2 + 1 +  1 // 2)
     N_angles = length(angles)
 
-    @show N_angles
-
     img = similar(sinogram, (N, N,  size(sinogram, 3)))
     fill!(img, 0)
 
@@ -55,7 +53,7 @@ function iradon2(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
     return img 
 end
 
-@kernel function iradon_kernel2!(img, sinogram, in_height, angles, mid, radius, absorb_f) where {T, IT}
+@kernel function iradon_kernel2!(img::AbstractArray{T}, sinogram::AbstractArray{T}, in_height, angles, mid, radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
@@ -97,10 +95,7 @@ end
         # calculate intersection distance
         distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
         # add value to ray, potentially attenuate by attenuated exp factor
-        if iangle > 99 
-            @show iangle
-        end
-        img[icell, jcell, i_z] += distance * sinogram[i, iangle, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        @inbounds Atomix.@atomic img[icell, jcell, i_z] += distance * sinogram[i, iangle, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
         xold, yold = xnew, ynew
     end 
 end
