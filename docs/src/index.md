@@ -44,8 +44,11 @@ angles = range(0f0, 2f0π, 500)[begin:end-1]
 simshow(sinogram)
 simshow(backproject)
 ```
-<a  href="docs/src/assets/sinogram.png"><img src="docs/src/assets/sinogram.png"  width="300"></a>
-<a  href="docs/src/assets/radonka_iradon.png"><img src="docs/src/assets/radonka_iradon.png"  width="308"></a>
+
+```@raw html
+<a  href="assets/sinogram.png"><img src="assets/sinogram.png"  width="300"></a>
+<a  href="assets/radonka_iradon.png"><img src="assets/radonka_iradon.png"  width="308"></a>
+```
 
 # Examples
 See either the [documentation](https://roflmaostc.github.io/RadonKA.jl/dev/tutorial).
