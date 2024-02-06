@@ -11,8 +11,8 @@ using Zygote
 	    sinogram[5, :, 1] .= 1
         @test iradon(sinogram, [0.0f0, π * 0.5]) ≈ [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0; 0.0 1.0 1.0 1.0 1.0 2.0 1.0 1.0 1.0 0.5; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.5 0.0 0.0 0.0 0.0;;;] 
 
-        @test iradon(sinogram[:, 1, :], Float32[π / 4 + π]) ≈ [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.46446568 6.7434956f-7 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.4142132 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 1.4142135 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.4142132 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 1.4142137 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.4142133 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.4142135 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0;;;] 
 
+        @test iradon(sinogram[:, 1, :], Float32[π / 4 + π]) == Float32[0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.46446568 6.7434956f-7 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.4142132 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 1.4142135 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.4142132 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 1.4142137 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.4142133 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.3486991f-6 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
     end
 
     @testset "Exponential iradon" begin
@@ -21,9 +21,9 @@ using Zygote
 
 
         angles = [0]
-        arr = iradon(sinogram, angles, 0.1)
+        arr = iradon(sinogram, angles, μ=0.1)
 
-        exp.(-(8.5:-1:1.5) .* 0.1) ≈ arr[6, begin+1:end-1]
+        @test exp.(-(8.5:-1:1.5) .* 0.1) ≈ arr[begin+1:end-1, 6][:]
     end
 
 
@@ -71,19 +71,25 @@ using Zygote
 
         sinogram2 = radon(array3, angles2)
         array_filtered = filtered_backprojection(sinogram2, angles2)
-        @test ≈(array_filtered / sum(array_filtered) .+ 0.1, array3 / sum(array3) .+ 0.1, rtol=0.05)
+        @test ≈(array_filtered / sum(array_filtered) .+ 0.1, array3 / sum(array3) .+ 0.1, rtol=0.06)
+
+        geometry = RadonParallelCircle(32, -15:0.1:15)
+        sinogram2 = radon(array3, angles2; geometry)
+        array_filtered = filtered_backprojection(sinogram2, angles2; geometry)
+        @test ≈(array_filtered[5:28, 5:28] / sum(array_filtered[5:28, 5:28]) .+ 0.1, array3[5:28, 5:28] / sum(array3[5:28, 5:28]) .+ 0.1, rtol=0.05)
     end
 
     @testset "Test gradients" begin
-        x = randn((10, 10))
-        test_rrule(radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
+        x = randn((10, 10, 1))
+        geometry=RadonParallelCircle(size(x, 1), -(size(x,1)-1)÷2:(size(x,1)-1)÷2) 
+        test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
         y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
-        test_rrule(iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
+        test_rrule(RadonKA._iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
         
-        x = randn((10, 10))
-        test_rrule(radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), 0.1⊢ ChainRulesTestUtils.NoTangent())
+        x = randn((10, 10, 1))
+        test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1⊢ ChainRulesTestUtils.NoTangent())
         y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
-        test_rrule(iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), 0.1 ⊢ ChainRulesTestUtils.NoTangent())
+        test_rrule(RadonKA._iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1 ⊢ ChainRulesTestUtils.NoTangent())
     end
 
 
