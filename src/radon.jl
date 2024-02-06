@@ -82,7 +82,16 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     # angles_T might be a normal vector instead of Cuvector. fix it. 
     angles = similar(img, (size(angles_T, 1),))
     angles .= typeof(angles)(angles_T) 
-
+    
+    in_height = similar(img, (size(geometry.in_height, 1),))
+    in_height .= typeof(in_height)(geometry.in_height) 
+    
+    if geometry isa RadonFlexibleCircle
+        out_height = similar(img, (size(angles_T, 1),))
+        out_height .= typeof(out_height)(geometry.out_height) 
+    else
+        out_height = in_height
+    end
 
     # geometry can be very densely sampled, hence the sinogram depends on geometry size
     N_sinogram = length(geometry.in_height)
@@ -103,7 +112,7 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
 
     # of the kernel goes
     kernel! = radon_kernel!(backend)
-    kernel!(sinogram::AbstractArray{T}, img, geometry.in_height, angles, mid, radius, absorb_f,
+    kernel!(sinogram::AbstractArray{T}, img, in_height, out_height, angles, mid, radius, absorb_f,
     		ndrange=(N_sinogram, N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
     return sinogram
@@ -111,17 +120,18 @@ end
 
 @inline inside_circ(ii, jj, mid, radius) = (ii - mid)^2 + (jj - mid)^2 ≤ radius ^2 
 
-@kernel function radon_kernel!(sinogram::AbstractArray{T}, img::AbstractArray{T}, in_height, angles, mid, radius, absorb_f) where {T}
+@kernel function radon_kernel!(sinogram::AbstractArray{T}, img::AbstractArray{T}, in_height, out_height, angles, mid, radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
 
-    @inbounds xend, yend = T(size(img, 2)), T(in_height[i])
+    @inbounds ybegin = T(in_height[i])
+    @inbounds yend = T(out_height[i])
 
     # map the detector positions on a circle
     # also rotate according to the angle
     x_dist_rot, y_dist_rot, x_dist_end_rot, y_dist_end_rot = 
-        next_ray_on_circle(yend, yend, mid, radius, sinα, cosα)
+        next_ray_on_circle(ybegin, yend, mid, radius, sinα, cosα)
 
     # new will be always the current coordinates
     # end the final destination
