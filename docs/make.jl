@@ -5,7 +5,8 @@ makedocs(modules = [RadonKA],
          sitename = "RadonKA.jl", 
          pages = Any[
             "RadonKA.jl" => "index.md",
-            "Tutorial" =>  "tutorial.md",
+            "Simple Tutorial" =>  "tutorial.md",
+            "Specifying different geometries and absorption" =>  "geometries.md",
             "Benchmark with Matlab and Astra" =>  "benchmark.md",
             "Function Docstrings" =>  "functions.md"
          ],
