@@ -52,13 +52,13 @@ RadonKA.jl supports CUDA and usually provides a 10-20x speedup on typical RTX 3x
 Pay attention that the element type of the array/img should be `Float32` for good speedup.
 In my case we used a AMD Ryzen 5 5600X 6-Core Processor and a CUDA RTX 3060 Super.
 ```julia
-using CUDA, CUDA.CUDAKernels
+using CUDA
 
 img_c = CuArray(img);
 angles_c = CuArray(angles);
 
 # 0.005611 seconds (8.95 k CPU allocations: 363.828 KiB) (2 GPU allocations: 998.047 KiB, 0.26% memmgmt time)
-CUDA.@time CUDA.@sync sinogram_c = radon(img_c, angles_c, backend=CUDABackend());
+CUDA.@time CUDA.@sync sinogram_c = radon(img_c, angles_c);
 ```
 
 
@@ -73,5 +73,5 @@ volume_c = CuArray(randn(Float32,(512, 512, 512)));
 @time radon(volume, angles);
 
 # 2.527153 seconds (8.95 k CPU allocations: 363.703 KiB) (2 GPU allocations: 498.027 MiB, 0.06% memmgmt time)
-CUDA.@time CUDA.@sync radon(volume_c, angles_c, backend=CUDABackend());
+CUDA.@time CUDA.@sync radon(volume_c, angles_c);
 ```
