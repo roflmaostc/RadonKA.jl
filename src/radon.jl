@@ -78,7 +78,7 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     @assert size(img, 1) == size(img, 2) "Arrays has to be quadratically shaped"
     @assert size(img, 1) == geometry.N
     if geometry isa RadonFlexibleCircle
-        @assert size(sinogram, 1) == size(geometry.out_height, 1)
+        @assert size(geometry.in_height, 1) == size(geometry.out_height, 1)
     end
     backend = KernelAbstractions.get_backend(img)
  
