@@ -52,7 +52,7 @@ RadonKA.jl supports CUDA and usually provides a 10-20x speedup on typical RTX 3x
 Pay attention that the element type of the array/img should be `Float32` for good speedup.
 In my case we used a AMD Ryzen 5 5600X 6-Core Processor and a CUDA RTX 3060 Super.
 ```julia
-using CUDA, CUDA.CUDAKernels
+using CUDA
 
 img_c = CuArray(img);
 angles_c = CuArray(angles);

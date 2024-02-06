@@ -9,20 +9,21 @@ A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implem
 
 # Quick Overview
 * [x] For 2D and 3D arrays 
-* [x] parallel `radon` and `iradon`
-* [x] arbitrary (2D) geometries can be specified with `ray_startpoints` and `ray_endpoints` 
-* [x] attenuated `radon` and `iradon` (see this [paper](https://iopscience.iop.org/article/10.1088/0266-5611/17/1/309/meta) as reference)
+* [x] parallel `radon` and `iradon` (`?RadonParallelCircle`)
+* [x] attenuated `radon` and `iradon` (see the parameter `μ`) and see this [paper](https://iopscience.iop.org/article/10.1088/0266-5611/17/1/309/meta) as reference)
+* [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (cone beam could be a special case if this) (`?RadonFlexibleCircle`)
 * [x] It is restricted to the incircle of radius `N ÷ 2 - 1` if the array has size `(N, N, N_z)`
 * [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl)
 * [x] tested on `CPU()` and `CUDABackend`
 * [x] registered adjoint rules for both `radon` and `iradon`
+* [x] high performance however not ultra high performance
+* [x] simple API
 
 # Installation
 Requires Julia at least 1.9
 ```julia
 julia> ]add RadonKA
 ```
-
 
 # Simple use
 ```julia

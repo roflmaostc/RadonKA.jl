@@ -1,51 +1,52 @@
 # Benchmark and Comparison with Matlab and Astra
-Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeForce RTX 3060 with Julia 1.9.4 on Ubuntu 22.04.
+Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeForce RTX 3060 with Julia 1.10.0 on Ubuntu 22.04.
 
 # Results
 
 |                   |RadonKA.jl CPU | RadonKA.jl GPU    | Matlab CPU | Astra CPU | Astra GPU |
 |-------------------|---------------|-------------------|------------|-----------|-----------|
-|2D sample - Radon  |1.2s           |0.091s             |0.39s       |7.0s       |0.025s     |
-|2D sample - IRadon |1.8s           |0.52s              |0.37s       |6.4s       |N/A        |
-|3D sample - Radon  |8.4s           |0.47s              |9.01s       |N/A        |1.12s      |
-|3D sample - IRadon |10.5s          |0.59s              |3.24s       |N/A        |N/A        |
+|2D sample - Radon  |1.1s           |0.07s              |0.39s       |7.0s       |0.025s     |
+|2D sample - IRadon |1.4s           |0.50s              |0.37s       |6.4s       |N/A        |
+|3D sample - Radon  |7.5s           |0.29s              |9.01s       |N/A        |1.12s      |
+|3D sample - IRadon |7.9s           |0.53s              |3.24s       |N/A        |N/A        |
 
 
 
 ## RadonKA.jl
-See this [benchmark example](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/benchmark_radon_iradon.jl)
 ```julia
-using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest, TestImages
-using RadonKA
-using CUDA, CUDA.CUDAKernels
-
-sample_2D = Float32.(testimage("resolution_test_1920"));
-sample_2D_c = CuArray(sample_2D);
-simshow(sample_2D)
-
-angles = range(0, 2π, 500);
-angles_c = CuArray(angles);
-
-# run those cells multiple times
-@time sinogram = radon(sample_2D, angles);
-simshow(sinogram)
-@time sample_iradon = iradon(sinogram, angles);
-
-CUDA.@time CUDA.@sync sinogram_c = radon(sample_2D_c, angles_c, backend=CUDABackend());
-CUDA.@time CUDA.@sync sample_iradon_c = iradon(sinogram_c, angles_c, backend=CUDABackend());
-
-
-sample_3D = randn(Float32, (512, 512, 100));
-sample_3D_c = CuArray(sample_3D)
-
-@time sinogram_3D = radon(sample_3D, angles);
-@benchmark radon($sample_3D, $angles)
-@benchmark iradon($sinogram_3D, $angles)
-
-sinogram_3D_c = radon(sample_3D_c, angles_c, backend=CUDABackend())
-@benchmark CUDA.@sync radon($sample_3D_c, $angles_c, backend=CUDABackend())
-@benchmark CUDA.@sync iradon($sinogram_3D_c, $angles_c, backend=CUDABackend())
-
+ using IndexFunArrays, ImageShow, Plots, ImageIO, PlutoUI, PlutoTest, TestImages
+ using RadonKA
+ using CUDA, CUDA.CUDAKernels
+ using BenchmarkTools
+ 
+ sample_2D = Float32.(testimage("resolution_test_1920"));
+ sample_2D_c = CuArray(sample_2D);
+ simshow(sample_2D)
+ 
+ angles = range(0, 2π, 500);
+ angles_c = CuArray(angles);
+ 
+ # run those cells multiple times
+ sinogram = radon(sample_2D, angles);
+ @btime sinogram = radon($sample_2D, $angles);
+ simshow(sinogram)
+ @btime sample_iradon = iradon($sinogram, $angles);
+ 
+ @btime CUDA.@sync sinogram_c = radon($sample_2D_c, $angles_c);
+ sinogram_c = radon(sample_2D_c, angles_c);
+ @btime CUDA.@sync sample_iradon_c = iradon($sinogram_c, $angles_c);
+ 
+ 
+ sample_3D = randn(Float32, (512, 512, 100));
+ sample_3D_c = CuArray(sample_3D)
+ 
+ sinogram_3D = radon(sample_3D, angles);
+ @btime radon($sample_3D, $angles)
+ @btime iradon($sinogram_3D, $angles)
+ 
+ sinogram_3D_c = radon(sample_3D_c, angles_c)
+ @btime CUDA.@sync radon($sample_3D_c, $angles_c)
+ @btime CUDA.@sync iradon($sinogram_3D_c, $angles_c)
 ```
 ![](../assets/radonka_sinogram.png)
 ![](../assets/radonka_iradon.png)

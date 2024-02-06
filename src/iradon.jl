@@ -1,51 +1,22 @@
-export iradon, filtered_backprojection
+export iradon
 
-"""
-    filtered_backprojection(sinogram, θs)
 
-Calculates the simple Filtered Backprojection in CT with applying a ramp filter
-in Fourier space.
-
-"""
-function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector, μ=nothing) where T
-    filter = similar(sinogram, (size(sinogram, 1),))
-    filter .= rr(T, (size(sinogram, 1), )) 
-
-    p = plan_fft(sinogram, (1,))
-    sinogram = real(inv(p) * (p * sinogram .* ifftshift(filter)))
-    return iradon(sinogram, θs, μ)
-end
 
 # handle 2D
-iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
-    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), T.(angles), μ), :, :, 1)
+function iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1};
+        geometry=RadonParallelCircle(size(sinogram,1) + 1,-(size(sinogram,1))÷2:(size(sinogram,1))÷2), μ=nothing) where {T, T2}
+    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles; geometry, μ), :, :, 1)
+end
 
-iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T2, 1}, μ=nothing) where {T, T2} =
-    iradon(sinogram, T.(angles), μ)
 
 """
-    iradon(sinogram, θs, μ=nothing)
+    iradon(sinogram, θs; <kwargs>)
 
-Calculates the parallel inverse Radon transform of the `sinogram`.
-The first two dimensions are y and x. The third dimension is z, the rotational axis.
-Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
-`size(sinogram, 1)` has to be an odd number. And `size(sinogram, 2)` has to be equal to
-`length(angles)`.
-The inverse Radon transform is rotated around the pixel `size(sinogram, 1) ÷ 2`, so there
-is always a real center pixel!
-
-`θs` is a vector or range storing the angles in radians.
-
-# Exponential IRadon Transform
-If `μ != nothing`, then the rays are attenuated with `exp(-μ * dist)` where `dist` 
-is the distance to the circular boundary of the field of view.
-`μ` is in units of pixel length. So `μ=1` corresponds to an attenuation of `exp(-1)` if propagated through one pixel.
-
-In principle, all backends of KernelAbstractions.jl should work but are not tested. CUDA and CPU arrays are actively tested.
 
 See also [`radon`](@ref).
 
-# Examples
+# Example
+# # Examples
 ```jldoctest
 julia> arr = zeros((5,2)); arr[2,:] .= 1; arr[4, :] .= 1
 2-element view(::Matrix{Float64}, 4, :) with eltype Float64:
@@ -60,111 +31,113 @@ julia> iradon(arr, [0, π/2])
  0.0  0.0  0.1        0.0  0.1        0.0
  0.0  0.1  0.2        0.1  0.2        0.0232051
  0.0  0.0  0.0232051  0.0  0.0232051  0.0
-
-julia> iradon(arr, [0, π/2], 1) # exponential
-6×6 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
- 0.0  0.0         0.0         0.0        0.0         0.0
- 0.0  0.0         0.00145226  0.0        0.00145226  0.0
- 0.0  0.00145226  0.00789529  0.0107308  0.033117    0.0183994
- 0.0  0.0         0.0107308   0.0        0.0107308   0.0
- 0.0  0.00145226  0.033117    0.0107308  0.0583388   0.0183994
- 0.0  0.0         0.0183994   0.0        0.0183994   0.0
 ```
 """
-function iradon(sinogram::AbstractArray{T, 3}, angles::AbstractArray{T, 1}, μ=nothing) where T
-    @assert isodd(size(sinogram, 1)) && size(sinogram, 2) == length(angles)
-    backend=KernelAbstractions.get_backend(sinogram)
-    absorption_f = let μ=μ
-        if isnothing(μ)
-            (x, y, x_start, y_start) -> one(T)
-        else
-            (x, y, x_start, y_start) -> exp(-T(μ) * sqrt((x - x_start)^2 + (y - y_start)^2))
-        end
-    end
-    # this is the actual size we are using for calculation
-    N = size(sinogram, 1)
-    N_angles = size(angles, 1)
-    
-    # the only significant allocation
-    img = similar(sinogram, (N + 1, N + 1, size(sinogram, 3)))
-    fill!(img, 0)
-    
-    # radius of the cylinder we are projecting through
-    radius = size(img, 1) ÷ 2 - 1
-    # mid point, it is actually N ÷ 2 + 1
-    # but because of how adress the indices, we need 1.5 instead of +1
-    mid = size(img, 1) ÷ 2 + T(1.5)
-    # the y_dists samplings, in principle we can add this as function parameter
-    y_dists = similar(img, (size(img, 1) - 1, ))
-    y_dists .= -radius:radius
-    
-    #@show typeof(sinogram), typeof(img), typeof(y_dists), typeof(angles)
-    kernel! = iradon_kernel!(backend)
-    kernel!(sinogram::AbstractArray{T}, img, y_dists, angles, mid, radius,
-            absorption_f,
-    		ndrange=(N, N_angles, size(img, 3)))
-    KernelAbstractions.synchronize(backend)    
-    return img
+function iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
+        geometry=RadonParallelCircle(size(sinogram,1) + 1,-(size(sinogram,1))÷2:(size(sinogram,1))÷2), μ=nothing) where {T}
+    return _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry, μ)
 end
 
-"""
-    iradon_kernel!(sinogram, img,
-                  y_dists, angles, mid, radius,
-                  absorption_f)
-"""
-@kernel function iradon_kernel!(sinogram::AbstractArray{T},
-			img, y_dists, angles, mid, radius,
-            absorption_f) where T
-    # r is the index of the angles
-    # k is the index of the detector spatial coordinate
-    # i_z is the index for the z dimension
-    k, r, i_z = @index(Global, NTuple)
+
+function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where T
+    @assert size(sinogram, 2) == length(angles_T) "size of angles does not match sinogram size"
+    @assert size(sinogram, 1) == size(geometry.in_height, 1)
+    backend = KernelAbstractions.get_backend(sinogram)
+ 
+    # angles_T might be a normal vector instead of Cuvector. fix it. 
+    angles = similar(sinogram, (size(angles_T, 1),))
+    angles .= typeof(angles)(angles_T) 
     
-    angle = angles[r]
-    sinα, cosα = sincos(angle)
-    
-    # x0, y0, x1, y1 beginning and end point of each ray
-    a, b, c, d = next_ray_on_circle(img, angle, y_dists[k], mid, radius, sinα, cosα)
-    a0, b0, c0, d0 = a, b, c, d 
-    # different comparisons depending which direction the ray is propagating
-    cac = a <= c ? (a,c) -> a<=c : (a,c) -> a>=c
-    cbd = b <= d ? (b,d) -> b<=d : (b,d) -> b>=d
-    
-    l = 1
-    # acculumators of the intensity
-    tmp = zero(T)
-    while cac(a, c) && cbd(b, d)
-        a_old, b_old = a, b
-        # would be good to move this branch outside of the while loop
-        # but maybe branch prediction is doing a good job here
-        if a ≈ c && b ≈ d
-        	break
-        end
-        
-        # find the next intersection for the ray
-        a, b = find_next_intersection(a,b,c,d)
-        l += 1
-        
-        # find the cell it is cutting through
-        cell_i, cell_j = find_cell((a_old, b_old),
-        						   (a, b))
-        
-        # distance travelled through that cell
-        distance = sqrt((a_old - a) ^2 +
-        				(b_old - b) ^2)
-        # cell value times distance travelled through
-        @inbounds Atomix.@atomic img[cell_i, cell_j, i_z] += 
-            distance * sinogram[k, r, i_z] * absorption_f(a, b, a0, b0)
+    in_height = similar(sinogram, (size(geometry.in_height, 1),))
+    in_height .= typeof(in_height)(geometry.in_height) 
+
+    if geometry isa RadonFlexibleCircle
+        out_height = similar(sinogram, (size(geometry.out_height, 1),))
+        out_height .= typeof(out_height)(geometry.out_height) 
+    else
+        out_height = in_height
     end
+
+    # geometry can be very densely sampled, hence the sinogram depends on geometry size
+    N = geometry.N
+    # we only propagate inside this in circle
+    # convert radius to correct float type, very important for performance!
+    radius = T((N - 1) ÷ 2)
+    # the midpoint of the array
+    # convert to good type
+    mid = T(N ÷ 2 + 1 +  1 // 2)
+    N_angles = length(angles)
+
+    img = similar(sinogram, (N, N,  size(sinogram, 3)))
+    fill!(img, 0)
+
+    # create an absorption function, maps just to 1 in case isnothing(μ)
+    absorb_f = make_absorption_f(μ, T)
+
+    # of the kernel goes
+    kernel! = iradon_kernel2!(backend)
+    kernel!(img, sinogram, in_height, out_height, angles, mid, radius, absorb_f,
+            ndrange=(size(sinogram, 1), N_angles, size(img, 3)))
+    KernelAbstractions.synchronize(backend)    
+    return img 
+end
+
+@kernel function iradon_kernel2!(img::AbstractArray{T}, sinogram::AbstractArray{T}, in_height, out_height, angles, mid, radius, absorb_f) where {T}
+    i, iangle, i_z = @index(Global, NTuple)
+    
+    @inbounds sinα, cosα = sincos(angles[iangle])
+
+    @inbounds ybegin = T(in_height[i])
+    @inbounds yend = T(out_height[i])
+
+    # map the detector positions on a circle
+    # also rotate according to the angle
+    x_dist_rot, y_dist_rot, x_dist_end_rot, y_dist_end_rot = 
+        next_ray_on_circle(ybegin, yend, mid, radius, sinα, cosα)
+
+    # new will be always the current coordinates
+    # end the final destination
+    # and old is the previous one
+    xnew = x_dist_rot
+    ynew = y_dist_rot
+    xend = x_dist_end_rot
+    yend = y_dist_end_rot
+    xold, yold = xnew, ynew
+
+
+
+    tmp = zero(T)
+    # we store old_direction
+    # if the sign of old_direction changes, we have to stop tracing
+    # because then we hit the end point 
+    _, _, sxold, syold = next_cell_intersection(xnew, ynew, xend, yend)
+    while true
+        # find next intersection point with integer grid
+        xnew, ynew, sx, sy = next_cell_intersection(xnew, ynew, xend, yend)
+
+        # if we leave the circle or the direction of marching changes, this is the end
+        inside_circ(xnew, ynew, mid, radius + T(0.5)) && 
+         (sx == sxold && sy == syold) || break
+        
+        # switch of i and j intentional to keep it consistent with existing code
+        icell, jcell = find_cell(xnew, ynew, xold, yold)
+
+        # calculate intersection distance
+        distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
+        # add value to ray, potentially attenuate by attenuated exp factor
+        @inbounds Atomix.@atomic img[icell, jcell, i_z] += distance * sinogram[i, iangle, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        xold, yold = xnew, ynew
+    end 
 end
 
 
  # define adjoint rules
-function ChainRulesCore.rrule(::typeof(iradon), sinogram::AbstractArray, angles, μ=nothing) 
-    res = iradon(sinogram, angles, μ)
+function ChainRulesCore.rrule(::typeof(_iradon), array::AbstractArray, angles,
+                              geometry, μ) 
+    res = _iradon(array, angles, geometry, μ)
     function pb_iradon(ȳ)
-        ad = radon(unthunk(ȳ), angles, μ)
-        return NoTangent(), ad, NoTangent(), NoTangent()
+        ad = _radon(unthunk(ȳ), angles, geometry, μ)
+        return NoTangent(), ad, NoTangent(), NoTangent(), NoTangent()
     end
     return res, pb_iradon 
 end

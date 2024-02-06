@@ -8,13 +8,15 @@ using ChainRulesCore
 using PrecompileTools
 
 
+include("geometry.jl")
 include("utils.jl")
 include("radon.jl")
 include("iradon.jl")
+include("filtered_backprojection.jl")
+include("radon_legacy.jl")
 
 
-
-
+# PrecompileTools
 @setup_workload begin
     img = randn((2,2))
     angles = range(0, π, 2)
@@ -27,10 +29,10 @@ include("iradon.jl")
         iradon(r, angles) 
         RadonKA.filtered_backprojection(r, angles)
         
-        r = radon(Float32.(img), Float32.(angles), 0.1f0) 
-        iradon(r, Float32.(angles), 0.1f0) 
-        r = radon(img, angles, 0.1) 
-        iradon(r, angles, 0.1) 
+        r = radon(Float32.(img), Float32.(angles), μ=0.1f0) 
+        iradon(r, Float32.(angles), μ=0.1f0) 
+        r = radon(img, angles, μ=0.1) 
+        iradon(r, angles, μ=0.1) 
     end
 end
 
