@@ -9,9 +9,9 @@ A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implem
 
 # Quick Overview
 * [x] For 2D and 3D arrays 
-* [x] parallel `radon` and `iradon`
-* [x] attenuated `radon` and `iradon`
-* [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (cone beam could be a special case if this)
+* [x] parallel `radon` and `iradon` (`?RadonParallelCircle`)
+* [x] attenuated `radon` and `iradon` (see the parameter `μ`)
+* [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (cone beam could be a special case if this) (`?RadonFlexibleCircle`)
 * [x] It is restricted to the incircle of radius `N ÷ 2 - 1` if the array has size `(N, N, N_z)`
 * [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl)
 * [x] tested on `CPU()` and `CUDABackend`
