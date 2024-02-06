@@ -12,12 +12,11 @@ A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implem
 * [x] parallel `radon` and `iradon` (`?RadonParallelCircle`)
 * [x] attenuated `radon` and `iradon` (see the parameter `μ`) and see this [paper](https://iopscience.iop.org/article/10.1088/0266-5611/17/1/309/meta) as reference)
 * [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (cone beam could be a special case if this) (`?RadonFlexibleCircle`)
-* [x] It is restricted to the incircle of radius `N ÷ 2 - 1` if the array has size `(N, N, N_z)`
 * [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl)
-* [x] tested on `CPU()` and `CUDABackend`
+* [x] tested on `CPU()` and `CUDABackend()`
 * [x] registered adjoint rules for both `radon` and `iradon`
-* [x] high performance however not ultra high performance
-* [x] simple API
+* [x] high performance however not ultra high performance. On par with ASTRA, on CUDA faster than Matlab.
+* [x] simple and extensible API
 
 # Installation
 Requires Julia at least 1.9
@@ -49,7 +48,8 @@ simshow(backproject)
 See either the [documentation](https://roflmaostc.github.io/RadonKA.jl/dev/tutorial).
 Otherwise, this [example](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/example_radon_iradon.jl) shows the main features, including CUDA support.
 There is one tutorial about [Gradient Descent optimization](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/CT_with_optimizer.jl).
-Another one covers how the Radon transform is used in [Volumetric Additive Manufacturing](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/volumetric_printing.jl).
+Another one covers how the Radon transform is used in [Tomographic Volumetric Additive Manufacturing](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/Tomographic_Volumetric_Additive_Manufacturing_with_Refraction.jl).
+One notebook explains how you can use the arbitrary geometries. See [here](examples/documentation_different_geometries.jl).
 
 # Development
 File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](https://github.com/roflmaostc/RadonKA.jl) if you encounter any problems.
@@ -61,7 +61,7 @@ File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](htt
 There is [TIGRE](https://github.com/CERN/TIGRE) and [ASTRA](https://github.com/astra-toolbox/astra-toolbox) which both offer more functionality for classic CT problems.
 They also feature GPU acceleration, however we did not observe that they outperform this package. Also, they don't allow to calculate the attenuated Radon transform
 and don't allow for arbitrary ray geometries, as we do.
-The fastest imlementation we found, is the [unmaintained torch-radon](https://github.com/matteo-ronchetti/torch-radon). Its kernels are written in CUDA C code and offer a PyTorch interface.
+The fastest implementation we found, is the [unmaintained torch-radon](https://github.com/matteo-ronchetti/torch-radon). Its kernels are written in CUDA C code and offer a PyTorch interface.
 There is a [torch-radon fork](https://github.com/carterbox/torch-radon) which allows to run it with newer versions. It offers no attenuated Radon transform.
 
 
