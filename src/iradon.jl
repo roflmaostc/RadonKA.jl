@@ -39,7 +39,7 @@ function iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
 end
 
 
-function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry::RadonParallelCircle, μ) where T
+function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where T
     @assert size(sinogram, 2) == length(angles_T) "size of angles does not match sinogram size"
     @assert size(sinogram, 1) == size(geometry.in_height, 1)
     backend = KernelAbstractions.get_backend(sinogram)

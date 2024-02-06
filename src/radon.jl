@@ -73,7 +73,7 @@ end
 internal method which handles the different dispatches.
 """
 function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
-        geometry::RadonParallelCircle, μ) where  {T}
+        geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where  {T}
 
     @assert size(img, 1) == size(img, 2) "Arrays has to be quadratically shaped"
     @assert size(img, 1) == geometry.N
@@ -87,7 +87,7 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     in_height .= typeof(in_height)(geometry.in_height) 
     
     if geometry isa RadonFlexibleCircle
-        out_height = similar(img, (size(angles_T, 1),))
+        out_height = similar(img, (size(geometry.out_height, 1),))
         out_height .= typeof(out_height)(geometry.out_height) 
     else
         out_height = in_height

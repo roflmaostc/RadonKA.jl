@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.36
+# v0.19.38
 
 using Markdown
 using InteractiveUtils
@@ -23,7 +23,7 @@ begin
 end
 
 # ╔═╡ e3a3dc83-6536-445f-b56b-d8ad62cd9a85
-using TestImages, RadonKA, ImageShow, ImageIO, Noise, PlutoUI, BenchmarkTools, CUDA, Zygote, IndexFunArrays, FileIO, NDTools, Plots, ProgressMeter
+using TestImages, RadonKA, ImageShow, ImageIO, Noise, PlutoUI, BenchmarkTools, CUDA, Zygote, IndexFunArrays, FileIO, NDTools, Plots, ProgressLogging, Optim
 
 # ╔═╡ eb4b7177-4f93-4728-8c91-4ff6a86f40cf
 md"# Load packages and check CUDA"
@@ -66,7 +66,7 @@ The full derivation of `distort_rays_vial` is linked in this [PDF](https://githu
 "
 
 # ╔═╡ 5ef75bb5-5ab0-4e98-9026-a8e2c5b7833d
-angles = togoc(range(0, 2f0 * π, 700));
+angles = togoc(range(0, 2f0 * π, 400));
 
 # ╔═╡ 5aa03590-c552-410e-93aa-1e47dabd2f9e
 N_s = size(target,1) - 1
@@ -93,12 +93,6 @@ nresin = 1.48f0
 
 # ╔═╡ 66a09fd3-545b-4456-be74-6593d2d15a28
 radius_pixel = N_s/2f0
-
-# ╔═╡ 242975ee-277a-4a6a-b329-2a73012ce4bd
--N_s/2f0 + 1f0
-
-# ╔═╡ ca6ec49d-746e-4b75-ba9e-8252f999c86c
-range(-N_s/2f0 + 1, N_s / 2f0 - 1, N_s)
 
 # ╔═╡ af83cb81-49b8-41f4-a24e-c1e33e76d925
 function distort_rays_vial(y::T, Rₒ::T, Rᵢ::T, nvial::T, nresin::T) where T
@@ -143,9 +137,6 @@ ray_points = distort_rays_vial.(range(-N_s/2f0 + 1f0, N_s / 2f0 - 1f0, N_s),
 # ╔═╡ 76b4c0de-af7a-456e-8d49-04f10a0a17fb
 ray_startpoints, ray_endpoints = map(first, ray_points), map(x->x[2], ray_points)
 
-# ╔═╡ 63c4907f-ba79-4b07-a079-1f12e1491bba
-distort_rays_vial(0.0002, 10.0, 9.8, 1.2, 1.1)
-
 # ╔═╡ 4cdc5592-3b92-4e98-8718-d77dd939ebf1
 md"## Ray distribution inside vial"
 
@@ -154,15 +145,18 @@ kk = 1
 
 # ╔═╡ dc22dead-1b83-4787-a147-9811136af085
 begin
-	sinogram = zeros((size(target,1)-1, kk))
+	sinogram = zeros((length(ray_startpoints), kk))
 	sinogram[1:1:end,:] .= 1
 end;
 
 # ╔═╡ e10549a7-0f31-48fa-8d38-820907d8554e
 Revise.errors()
 
+# ╔═╡ e83be634-dde4-4ed4-9226-2ba895a84d15
+geometry = RadonKA.RadonFlexibleCircle(size(target, 1), ray_startpoints, ray_endpoints)
+
 # ╔═╡ 85b6e54c-3256-4ba8-9889-56be82de0203
-simshow(Array(iradon(togoc(sinogram), togoc(range(0, 2π, kk + 1)[1:end-1]), 0.008f0; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), γ=0.6)
+simshow(Array(iradon(togoc(sinogram), togoc(range(0, 2π, kk + 1)[1:end-1]); geometry, μ=0.01)), γ=0.6)
 
 # ╔═╡ 5d55464f-c7d9-4e45-a1e7-907c2137be95
 md"# Define Optimization algorithm
@@ -170,15 +164,41 @@ See this paper:
 [*Charles M. Rackson, Kyle M. Champley, Joseph T. Toombs, Erika J. Fong, Vishal Bansal, Hayden K. Taylor, Maxim Shusteff, Robert R. McLeod, Object-space optimization of tomographic reconstructions for additive manufacturing*](https://www.sciencedirect.com/science/article/abs/pii/S2214860421005212)
 "
 
+# ╔═╡ 834cd0f6-9be0-4589-82c0-ca0021911dd5
+function make_fg!(fwd_operator, target, threshold)
+
+	isobject = target .== 1
+	notobject = target .== 0
+	f = let fwd_operator=fwd_operator
+		# apply sqrt for anscombe
+		f(x) = begin
+			fwd = fwd_operator(x)
+			return (sum(abs2, max.(0, fwd[notobject] .- threshold[1])) +
+					sum(abs2, max.(0, threshold[2] .- fwd[isobject])) +
+					sum(abs2, max.(0, fwd[isobject] .- 1)))
+		end
+	end
+
+	g! = let f=f
+		g!(G, x) = begin
+			if !isnothing(G)
+				G .= Zygote.gradient(f, x)[1]
+			end
+		end
+	end
+
+	return f, g!
+end
+
 # ╔═╡ 697d4c7d-697b-452c-8a6a-25f2a1089529
-function iter!(buffer, img, θs, μ; clip_sinogram=true, ray_startpoints, ray_endpoints)
-	sinogram = radon(img, θs, μ; ray_startpoints, ray_endpoints)
+function iter!(buffer, img, θs, μ; clip_sinogram=true, geometry)
+	sinogram = radon(img, θs; μ, geometry)
 
 	if clip_sinogram
 		sinogram .= max.(sinogram, 0)
 	end
 	
-	img_recon = iradon(sinogram, θs, μ; ray_startpoints, ray_endpoints)
+	img_recon = iradon(sinogram, θs; μ, geometry)
 	img_recon ./= maximum(img_recon)
 	buffer .= max.(img_recon, 0)
 	return buffer, sinogram
@@ -188,7 +208,7 @@ end
 # see https://www.sciencedirect.com/science/article/abs/pii/S2214860421005212
 function OSMO(img::AbstractArray{T}, θs, μ=nothing; 
 			  thresholds=(0.65, 0.75), N_iter = 2,
-				ray_startpoints=nothing, ray_endpoints=nothing) where T
+				geometry) where T
 	N = size(img, 1)
 	guess = copy(img)
 
@@ -197,18 +217,23 @@ function OSMO(img::AbstractArray{T}, θs, μ=nothing;
 
 	losses = T[]
 	buffer = copy(img)
-	tmp, s = iter!(buffer, guess, θs, μ; clip_sinogram=true, 						ray_startpoints, ray_endpoints)
-	@showprogress for i in 1:N_iter
+	tmp, s = iter!(buffer, guess, θs, μ; clip_sinogram=true, geometry)
+	@progress for i in 1:N_iter
 		guess[notobject] .-= max.(0, tmp[notobject] .- thresholds[1])
-		tmp, s = iter!(buffer, guess, θs, μ; clip_sinogram=true,
-						ray_startpoints, ray_endpoints)
+		tmp, s = iter!(buffer, guess, θs, μ; clip_sinogram=true, geometry)
 		guess[isobject] .+= max.(0, thresholds[2] .- tmp[isobject])
 	end
 	
-	printed = iradon(s, θs, μ; ray_startpoints, ray_endpoints)
+	printed = iradon(s, θs; μ, geometry)
 	printed ./= maximum(printed)
 	return guess, s, printed
 end
+
+# ╔═╡ 12e7c6b7-fcf3-44e4-9d80-785704d93cb5
+fwd = x -> iradon(max.(0,x), angles; geometry)
+
+# ╔═╡ 942e1cf7-a47b-43af-a460-1ea896a2c9b8
+ f, g! = make_fg!(fwd, target, (0.65, 0.75))
 
 # ╔═╡ d80f6c47-1c55-4a7e-9374-104806873a9a
 md"# Run optimization
@@ -216,9 +241,20 @@ With a decent GPU (such as RTX 3060) it should take around ~20-30s.
 With a 12 core multithreaded CPU around ~15min.
 "
 
+# ╔═╡ be45bfe1-e91e-45eb-8902-62e8df0d8ac7
+begin
+	init0 = radon(target, angles);
+	init0 .= 0
+end;
+
+# ╔═╡ e14a65c3-ece0-4d1e-96a7-9a9ab00001ad
+@time res = Optim.optimize(f, g!, init0, LBFGS(),
+                                 Optim.Options(iterations = 15,  
+                                               store_trace=true))
+
 # ╔═╡ 2ca8698e-3ff8-445c-a5e3-3a20d2e2afc3
 @mytime a_object, patterns, printed = OSMO(target, angles, 1/350f0; N_iter=200,
-							ray_startpoints=togoc(ray_startpoints),ray_endpoints=togoc(ray_endpoints))
+							geometry)
 
 # ╔═╡ ec528b63-95eb-430b-b683-04e207dd61f0
 simshow((Array(printed) .> 0.7) .- 0 .* Array(target), cmap=:turbo)
@@ -226,20 +262,23 @@ simshow((Array(printed) .> 0.7) .- 0 .* Array(target), cmap=:turbo)
 # ╔═╡ 43e4b941-b838-483d-9a8f-8897720f8b90
 simshow(Array(printed), cmap=:turbo)
 
+# ╔═╡ 45884ebb-a02d-446a-a7ca-05b8b4abc244
+simshow(Array(fwd(res.minimizer)), cmap=:turbo)
+
 # ╔═╡ 7c998816-b4de-4dbf-977b-bdab9355be79
-simshow(Array(iradon(patterns[:, 96:96], togoc(angles[96:96]), 1/350f0 ; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), cmap=:turbo)
+simshow(Array(iradon(patterns[:, 96:96], togoc(angles[96:96]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ 28d8c378-b818-4d61-b9d4-a06ad7cc21e3
-simshow(Array(iradon(patterns[:, 306:306], togoc(angles[306:306]), 1/350f0 ; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), cmap=:turbo)
+simshow(Array(iradon(patterns[:, 306:306], togoc(angles[306:306]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ beb61bb1-3f7c-4301-92ca-5418bc0445cf
-simshow(Array(iradon(patterns[:, 1:1], togoc(angles[1:1]), 1/350f0 ; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), cmap=:turbo)
+simshow(Array(iradon(patterns[:, 1:1], togoc(angles[1:1]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ 88895d8d-432e-4337-a51c-12ac4e4a4325
 @bind i Slider(1:size(angles,1), show_value=true)
 
 # ╔═╡ 61048e10-8e23-41a6-8c49-0b1a8c0adc24
-simshow(Array(iradon(patterns[:, i:i], togoc(angles[i:i]), 1/350f0 ; ray_startpoints=togoc(ray_startpoints), ray_endpoints=togoc(ray_endpoints))), cmap=:turbo)
+simshow(Array(iradon(patterns[:, i:i], togoc(angles[i:i]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ 21c0b369-a4b2-43ea-87b8-702474d88584
 simshow(Array(patterns))
@@ -257,6 +296,9 @@ function plot_histogram(target, object_printed, thresholds; yscale=:log10)
 	plot!([thresholds[2], thresholds[2]], [1, 10000_000], label="upper threshold", linewidth=3)
 	#plot!([chosen_threshold, chosen_threshold], [1, 30000000], label="chosen threshold", linewidth=3)
 end
+
+# ╔═╡ 4e3274ed-ad71-4568-a930-c50abe7c6bd5
+plot_histogram(Array(target), Array(fwd(res.minimizer)), (0.65, 0.75))
 
 # ╔═╡ 03223eb4-3c15-4899-93bf-5440fb6b5c7a
 plot_histogram(Array(target), Array(printed), (0.65, 0.75))
@@ -284,24 +326,29 @@ plot_histogram(Array(target), Array(printed), (0.65, 0.75))
 # ╠═b94f82e8-1c24-46a0-b3e9-f98a0e3e1c12
 # ╠═66a09fd3-545b-4456-be74-6593d2d15a28
 # ╠═6721b65f-48ed-4dc7-99dd-c460bb124c1e
-# ╠═242975ee-277a-4a6a-b329-2a73012ce4bd
-# ╠═ca6ec49d-746e-4b75-ba9e-8252f999c86c
 # ╠═76b4c0de-af7a-456e-8d49-04f10a0a17fb
-# ╠═63c4907f-ba79-4b07-a079-1f12e1491bba
 # ╠═af83cb81-49b8-41f4-a24e-c1e33e76d925
 # ╟─4cdc5592-3b92-4e98-8718-d77dd939ebf1
 # ╠═dc22dead-1b83-4787-a147-9811136af085
 # ╠═494c5b20-0af2-4903-959c-812459877c31
 # ╠═e10549a7-0f31-48fa-8d38-820907d8554e
+# ╠═e83be634-dde4-4ed4-9226-2ba895a84d15
 # ╠═85b6e54c-3256-4ba8-9889-56be82de0203
 # ╟─5d55464f-c7d9-4e45-a1e7-907c2137be95
+# ╠═834cd0f6-9be0-4589-82c0-ca0021911dd5
 # ╠═697d4c7d-697b-452c-8a6a-25f2a1089529
 # ╠═624858de-e7da-4e3c-91b5-6ab7b5e645d5
+# ╠═12e7c6b7-fcf3-44e4-9d80-785704d93cb5
+# ╠═942e1cf7-a47b-43af-a460-1ea896a2c9b8
 # ╟─d80f6c47-1c55-4a7e-9374-104806873a9a
+# ╠═be45bfe1-e91e-45eb-8902-62e8df0d8ac7
+# ╠═4e3274ed-ad71-4568-a930-c50abe7c6bd5
+# ╠═e14a65c3-ece0-4d1e-96a7-9a9ab00001ad
 # ╠═2ca8698e-3ff8-445c-a5e3-3a20d2e2afc3
 # ╠═03223eb4-3c15-4899-93bf-5440fb6b5c7a
 # ╠═ec528b63-95eb-430b-b683-04e207dd61f0
 # ╠═43e4b941-b838-483d-9a8f-8897720f8b90
+# ╠═45884ebb-a02d-446a-a7ca-05b8b4abc244
 # ╠═7c998816-b4de-4dbf-977b-bdab9355be79
 # ╠═28d8c378-b818-4d61-b9d4-a06ad7cc21e3
 # ╠═beb61bb1-3f7c-4301-92ca-5418bc0445cf
