@@ -1,5 +1,12 @@
 export RadonGeometry, RadonParallelCircle, RadonFlexibleCircle
 
+"""
+    abstract type RadonGeometry end
+
+List of geometries:
+* [`RadonParallelCircle`](@ref)
+* [`RadonFlexibleCircle`](@ref)
+"""
 abstract type RadonGeometry end
 
 """
@@ -31,8 +38,8 @@ One definition could be: `RadonFlexibleCircle(10, -4:4, zeros((9,)))`
 It would describe rays which enter the circle at positions `-4:4` but all of them would focus at the position 0 when leaving the circle.
 This is an extreme form of cone beam tomography.
 """
-struct RadonFlexibleCircle{T} <: RadonGeometry
+struct RadonFlexibleCircle{T, T2} <: RadonGeometry
     N::Int
     in_height::AbstractVector{T}
-    out_height::AbstractVector{T}
+    out_height::AbstractVector{T2}
 end
