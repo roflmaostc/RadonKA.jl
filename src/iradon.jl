@@ -42,6 +42,10 @@ end
 function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where T
     @assert size(sinogram, 2) == length(angles_T) "size of angles does not match sinogram size"
     @assert size(sinogram, 1) == size(geometry.in_height, 1)
+    if geometry isa RadonFlexibleCircle
+        @assert size(sinogram, 1) == size(geometry.out_height, 1)
+    end
+
     backend = KernelAbstractions.get_backend(sinogram)
  
     # angles_T might be a normal vector instead of Cuvector. fix it. 
