@@ -13,7 +13,6 @@ include("utils.jl")
 include("radon.jl")
 include("iradon.jl")
 include("filtered_backprojection.jl")
-include("radon_legacy.jl")
 
 
 # PrecompileTools
