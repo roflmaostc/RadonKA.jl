@@ -67,9 +67,6 @@ md"# Similar to fan Beam Tomography"
 # ╔═╡ 65d32c65-6e1f-417b-aba3-3c34dac35e05
 geometry_fan = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, range(-(N-1)÷4, (N-1)÷4, N-1))
 
-# ╔═╡ 26036d0c-2d5e-436c-8343-c4cd66c362c6
-N-100
-
 # ╔═╡ 37d760fa-74e6-47d1-b8e6-3315c1747b4c
 projected_fan = iradon(sinogram, angles; geometry=geometry_fan);
 
@@ -87,6 +84,20 @@ projected_extreme = iradon(sinogram, angles; geometry=geometry_extreme);
 
 # ╔═╡ 1e22032d-d57d-42d3-a9c5-9f2e94531346
 simshow(projected_extreme, γ=0.01)
+
+# ╔═╡ 17d64cfb-2aca-4998-8028-cbc8509f5459
+md"# Using Different weighting
+For example, if in your application some rays are stronger than others you can include weight factor array into the API.
+"
+
+# ╔═╡ 72209fb0-e671-402a-adc4-bef553d81721
+geometry_weight = RadonParallelCircle(N, -(N-1)÷2:(N-1)÷2, abs.(-(N-1)÷2:(N-1)÷2))
+
+# ╔═╡ 45b82171-c581-4fcf-9695-bc51464a2172
+projection_weight = iradon(sinogram, angles; geometry=geometry_weight);
+
+# ╔═╡ bbb51355-fa72-4064-b10e-46e29f4b2809
+simshow(projection_weight)
 
 # ╔═╡ 53603134-07a7-477b-a74b-7c5a5ba1f84b
 md"# Attenuated Radon Transform
@@ -118,7 +129,7 @@ angles2 = range(0, 2π, 300)
 geometry_extreme2 = RadonFlexibleCircle(N2, -(N2-1)÷2:(N2-1)÷2, zeros((N2-1,)))
 
 # ╔═╡ 267098dc-790a-4995-b462-a69868193916
-@time sg_img = radon(img, angles2, geometry=geometry_extreme2, μ=0.008)
+@time sg_img = radon(img, angles2, geometry=geometry_extreme2, μ=0.008);
 
 # ╔═╡ ded517b8-77a8-4c91-af16-78f3934f8634
 simshow(sg_img)
@@ -152,13 +163,16 @@ See the other notebooks how to set it up."
 # ╠═29c9d1ff-694c-4fff-b551-836cc9eaf347
 # ╠═da663a25-6dcd-4664-9bd1-c84970e58346
 # ╠═65d32c65-6e1f-417b-aba3-3c34dac35e05
-# ╠═26036d0c-2d5e-436c-8343-c4cd66c362c6
 # ╠═37d760fa-74e6-47d1-b8e6-3315c1747b4c
 # ╠═878121c5-4ad5-477b-88c7-f53df7510052
 # ╟─afe43c8c-cb98-411b-af8f-1228983ee2e0
 # ╠═7b0c8263-50d0-4569-96cb-297b4746ece3
 # ╠═0756e11b-35ca-4eef-be48-52b8b5c098cd
 # ╠═1e22032d-d57d-42d3-a9c5-9f2e94531346
+# ╟─17d64cfb-2aca-4998-8028-cbc8509f5459
+# ╠═72209fb0-e671-402a-adc4-bef553d81721
+# ╠═45b82171-c581-4fcf-9695-bc51464a2172
+# ╠═bbb51355-fa72-4064-b10e-46e29f4b2809
 # ╟─53603134-07a7-477b-a74b-7c5a5ba1f84b
 # ╠═b11cb860-3fab-4fc9-8921-bef32a8b7c12
 # ╠═51561641-67a3-46d4-ae87-b896dc351a60

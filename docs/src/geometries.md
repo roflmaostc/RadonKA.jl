@@ -69,7 +69,16 @@ simshow(projected_extreme, γ=0.01)
 ```
 ![](../assets/parallel_geometry_extreme.png)
 
+# Using Different weighting
+For example, if in your application some rays are stronger than others you can include weight factor array into the API.
 
+```julia
+geometry_weight = RadonParallelCircle(N, -(N-1)÷2:(N-1)÷2, abs.(-(N-1)÷2:(N-1)÷2))
+projection_weight = iradon(sinogram, angles; geometry=geometry_weight);
+
+simshow(projection_weight)
+```
+![](../assets/weights.png)
 
 ### Absorption
 
