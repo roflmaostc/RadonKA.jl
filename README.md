@@ -1,5 +1,6 @@
 # RadonKA.jl
 A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
+It offers multithreading and CUDA support and hence outperforms any existing Julia snippets. On CUDA it is faster than Matlab or roughly the same speed as ASTRA.
 
 #### ⚠️ This package is still very young. I would be happy to receive any feedback or if we can improve anything, just open an issue! ⚠️
 
