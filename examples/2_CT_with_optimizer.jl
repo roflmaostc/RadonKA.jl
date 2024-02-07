@@ -37,6 +37,9 @@ begin
 	togoc(x) = use_CUDA[] ? CuArray(x) : x
 end
 
+# ╔═╡ 063d95c7-d150-48f6-b04a-b2026ac4ba69
+md"# CUDA is enabled: $(use_CUDA[])"
+
 # ╔═╡ a351afa1-33e6-4f03-ae06-2215646b70db
 TableOfContents()
 
@@ -67,7 +70,7 @@ simshow(measurement)
 md"""# Simple Backprojection"""
 
 # ╔═╡ 464f022d-0773-43dd-81a7-ca2f6fc91634
-img_bp = filtered_backprojection(measurement, angles)
+img_bp = filtered_backprojection(measurement, angles);
 
 # ╔═╡ 49e59001-0e8d-4872-ae50-47c38486b3fd
 img_iradon = iradon(measurement, angles);
@@ -122,10 +125,10 @@ res = Optim.optimize(f, g!, init0, LBFGS(),
 a = res.trace[1]
 
 # ╔═╡ 27488594-0dfd-419d-be5c-0047b2ebdb59
-plot([a.value for a in res.trace], yscale=:log10)
+plot([a.value for a in res.trace], xlabel="Iterations", ylabel="loss value", yscale=:log10)
 
 # ╔═╡ 9f3d751e-6576-420d-8e5f-a4245be1bb0f
-[simshow(res.minimizer) simshow(img_bp) simshow(img) ]
+[simshow(res.minimizer) simshow(img_bp) simshow(img)]
 
 # ╔═╡ 8b9c5804-877c-4679-a732-8042031892de
 f(img_bp ./ maximum(img_bp) .* maximum(img))
@@ -214,7 +217,7 @@ md"# Try with CUDA"
 angles_c = togoc(angles);
 
 # ╔═╡ 443f9400-3cbd-4e41-b761-1c15c5bb537d
-f_cuda, g_cuda! = make_fg_anscombe!(x -> radon(x, angles_c), 500 .* togoc(measurement))
+f_cuda, g_cuda! = make_fg!(x -> radon(x, angles_c), togoc(measurement))
 
 # ╔═╡ 7c12b32f-1098-4050-b3f0-a89a53bb569e
 g_cuda!(togoc(init0), togoc(init0));
@@ -224,8 +227,19 @@ g_cuda!(togoc(init0), togoc(init0));
                                  Optim.Options(iterations = 20,  
                                                store_trace=true))
 
+# ╔═╡ 559a8866-5094-4e59-ac09-222a002e052b
+f_cuda2, g_cuda2! = make_fg_anscombe!(x -> radon(x, angles_c), togoc(measurement))
+
+# ╔═╡ 3b2599ea-a8db-4e7d-a51f-d9b0db6389c4
+@mytime res7 = Optim.optimize(f_cuda2, g_cuda2!, togoc(init0), LBFGS(),
+                                 Optim.Options(iterations = 20,  
+                                               store_trace=true))
+
 # ╔═╡ 34ec68ba-6130-448c-9bb0-04a4c3ed734c
-simshow(Array(res4.minimizer))
+[simshow(Array(res4.minimizer)) simshow(Array(res7.minimizer))]
+
+# ╔═╡ e72103d4-2940-4a60-addd-6d8990d8f0cf
+[simshow(Array(res4.minimizer)) simshow(res2.minimizer) simshow(res.minimizer) simshow(img_bp) simshow(img) ]
 
 # ╔═╡ 2b71a257-b3d1-4df1-83d2-4e0c7eeb4af8
 md"# Try with Optimization"
@@ -249,7 +263,7 @@ opt_f(init0_c, angles_c)
 problem = OptimizationProblem(opt_fun, init0_c, angles_c);
 
 # ╔═╡ fb3b8d74-341b-4627-b361-a28f7ccaf75b
-@mytime res5 = solve(problem, OptimizationOptimisers.Adam(0.03), maxiters=500)
+@mytime res5 = solve(problem, OptimizationOptimisers.Adam(0.01), maxiters=500)
 
 # ╔═╡ 68df9047-a898-4445-992a-cdfd9b4dc910
 @mytime res6 = solve(problem, OptimizationOptimJL.LBFGS(), maxiters=20)
@@ -262,6 +276,7 @@ problem = OptimizationProblem(opt_fun, init0_c, angles_c);
 # ╠═1a255b6f-e83a-481b-8017-ecc996bc4929
 # ╠═8d73ca31-2b63-4543-a5e5-82fd08917140
 # ╠═a0057ab8-5c84-4f63-882f-1ac6f84fbc5e
+# ╟─063d95c7-d150-48f6-b04a-b2026ac4ba69
 # ╠═f4ca400d-2405-40bf-95d8-35580b9871c3
 # ╠═9310a824-ee3b-4e51-b870-57401c411809
 # ╠═a351afa1-33e6-4f03-ae06-2215646b70db
@@ -310,7 +325,10 @@ problem = OptimizationProblem(opt_fun, init0_c, angles_c);
 # ╠═443f9400-3cbd-4e41-b761-1c15c5bb537d
 # ╠═7c12b32f-1098-4050-b3f0-a89a53bb569e
 # ╠═9060c58c-95fb-4616-b474-2193b41aab4f
+# ╠═559a8866-5094-4e59-ac09-222a002e052b
+# ╠═3b2599ea-a8db-4e7d-a51f-d9b0db6389c4
 # ╠═34ec68ba-6130-448c-9bb0-04a4c3ed734c
+# ╠═e72103d4-2940-4a60-addd-6d8990d8f0cf
 # ╟─2b71a257-b3d1-4df1-83d2-4e0c7eeb4af8
 # ╠═2f0ca285-fd1f-42bf-bb07-7fafb7ddd7f6
 # ╠═e2628d52-641d-4dcc-bfb0-6c3731d6a1c5
