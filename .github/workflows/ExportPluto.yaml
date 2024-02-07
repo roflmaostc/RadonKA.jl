@@ -65,6 +65,6 @@ jobs:
               uses: JamesIves/github-pages-deploy-action@releases/v4
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
-                  branch: gh-pages
+                  branch: gh-pages2
                   folder: .
                   single-commit: true
