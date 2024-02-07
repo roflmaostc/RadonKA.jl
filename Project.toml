@@ -1,7 +1,7 @@
 name = "RadonKA"
 uuid = "86de8297-835b-47df-b249-c04e8db91db5"
 authors = ["Felix Wechsler (roflmaostc) <fxw+git@mailbox.org>"]
-version = "0.3.0+doc1"
+version = "0.3.1"
 
 [deps]
 Atomix = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
