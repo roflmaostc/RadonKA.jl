@@ -64,6 +64,6 @@ struct RadonFlexibleCircle{T} <: RadonGeometry
     end
 
     function RadonFlexibleCircle(N, in_height, out_height, weights)
-        return new{eltype(in_height)}(N, in_height, out_height, in_height, weights) 
+        return new{eltype(in_height)}(N, in_height, out_height, weights) 
     end
 end
