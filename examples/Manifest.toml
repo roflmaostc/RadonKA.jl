@@ -1636,7 +1636,7 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 deps = ["Atomix", "ChainRulesCore", "FFTW", "IndexFunArrays", "KernelAbstractions", "PrecompileTools"]
 path = ".."
 uuid = "86de8297-835b-47df-b249-c04e8db91db5"
-version = "0.2.1"
+version = "0.3.1"
 
 [[deps.Random]]
 deps = ["SHA"]
