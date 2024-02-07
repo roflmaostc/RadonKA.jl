@@ -25,12 +25,13 @@ julia> arr = zeros((5,2)); arr[2,:] .= 1; arr[4, :] .= 1
 
 julia> iradon(arr, [0, π/2])
 6×6 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
- 0.0  0.0  0.0        0.0  0.0        0.0
- 0.0  0.0  0.1        0.0  0.1        0.0
- 0.0  0.1  0.2        0.1  0.2        0.0232051
- 0.0  0.0  0.1        0.0  0.1        0.0
- 0.0  0.1  0.2        0.1  0.2        0.0232051
- 0.0  0.0  0.0232051  0.0  0.0232051  0.0
+ 0.0  0.0  0.0       0.0  0.0       0.0
+ 0.0  0.0  0.0       0.0  0.0       0.0
+ 0.0  0.0  2.0       1.0  2.0       0.732051
+ 0.0  0.0  1.0       0.0  1.0       0.0
+ 0.0  0.0  2.0       1.0  2.0       0.732051
+ 0.0  0.0  0.732051  0.0  0.732051  0.0
+
 ```
 """
 function iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
@@ -98,6 +99,7 @@ end
     # also rotate according to the angle
     x_dist_rot, y_dist_rot, x_dist_end_rot, y_dist_end_rot = 
         next_ray_on_circle(ybegin, yend, mid, radius, sinα, cosα)
+    
 
     # new will be always the current coordinates
     # end the final destination

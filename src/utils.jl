@@ -192,8 +192,8 @@ end
 
 
 
-@inline function next_ray_on_circle(y_dist, y_dist_end, mid, radius, sinα, cosα)
-	x_dist = sqrt(radius^2 - y_dist^2)
+@inline function next_ray_on_circle(y_dist::T, y_dist_end, mid, radius, sinα, cosα) where T 
+	x_dist = sqrt(radius^2 - y_dist^2) + T(0.5)
     x_dist_end = -sqrt(radius^2 - y_dist_end^2)
 	y_dist_end = y_dist_end
 	
