@@ -104,24 +104,21 @@ using Zygote
     end
 
     @testset "Test gradients" begin
-        x = randn((10, 10, 1))
-        geometry=RadonParallelCircle(size(x, 1), -(size(x,1)-1)÷2:(size(x,1)-1)÷2) 
-        test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
-        y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
-        test_rrule(RadonKA._iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
-        
-        x = randn((10, 10, 1))
-        test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1⊢ ChainRulesTestUtils.NoTangent())
-        y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
-        test_rrule(RadonKA._iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1 ⊢ ChainRulesTestUtils.NoTangent())
-    end
-
-
-    @testset "utils" begin
-        @test RadonKA.find_intersections(0.0, 0.0, 4.0, 2.0) ≈ [0.0 1.0 2.0 2.0 3.0 4.0; 0.0 0.5 1.0 1.0 1.5 2.0]
-        @test RadonKA.find_intersections(0, 0, 2, 2) ≈ [0 1 1 2; 0 1 1 2]
-        @test RadonKA.find_intersections(0.0, 0.75, 2.75, 4.0) ≈ [0.0 0.21153846153846156 1.0 1.0576923076923077 1.9038461538461537 2.0 2.75; 0.75 1.0 1.9318181818181819 2.0 3.0 3.1136363636363638 4.0]
-        @test all(RadonKA.rays_on_circle(randn((8, 8)), 0.0) .≈ ([5.5, 3.26393202250021, 2.6715728752538097, 2.5, 2.6715728752538097, 3.26393202250021, 5.5], [2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5], [5.5, 7.73606797749979, 8.32842712474619, 8.5, 8.32842712474619, 7.73606797749979, 5.5], [2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5]))
+        x1 = randn((10, 10, 1))
+        x2 = randn((5,5,1)) 
+        for x in [x1, x2]
+            geometry = RadonParallelCircle(size(x, 1), -(size(x,1)-1)÷2:(size(x,1)-1)÷2) 
+            geometry1 = RadonFlexibleCircle(size(x, 1), -(size(x,1)-1)÷2:(size(x,1)-1)÷2, 0 .* (-(size(x,1)-1)÷2:(size(x,1)-1)÷2), (-(size(x,1)-1)÷2:(size(x,1)-1)÷2)) 
+            for geometry in [geometry, geometry1]
+                test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
+                y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
+                test_rrule(RadonKA._iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
+            
+                test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1⊢ ChainRulesTestUtils.NoTangent())
+                y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
+                test_rrule(RadonKA._iradon, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1 ⊢ ChainRulesTestUtils.NoTangent())
+            end
+        end
     end
 
 end
