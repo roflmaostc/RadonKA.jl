@@ -36,7 +36,7 @@ with respect to the midpoint which is located at `N ÷ 2 + 1`.
 
 One definition could be: `RadonFlexibleCircle(10, -4:4, zeros((9,)))`
 It would describe rays which enter the circle at positions `-4:4` but all of them would focus at the position 0 when leaving the circle.
-This is an extreme form of cone beam tomography.
+This is an extreme form of fan beam tomography.
 """
 struct RadonFlexibleCircle{T, T2} <: RadonGeometry
     N::Int

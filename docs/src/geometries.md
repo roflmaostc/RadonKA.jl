@@ -50,13 +50,13 @@ This interface has a simple API but is quite powerful.
 The first range indicates the position upon entrance in the circle.
 The second range indicates the position upon exit of the circle.
 
-### Cone Beam
+### fan Beam
 ```julia
-geometry_cone = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, range(-(N-1)÷4, (N-1)÷4, N-1))
+geometry_fan = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, range(-(N-1)÷4, (N-1)÷4, N-1))
 
-projected_cone = iradon(sinogram, angles; geometry=geometry_cone);
+projected_fan = iradon(sinogram, angles; geometry=geometry_fan);
 
-simshow(projected_cone, γ=0.01)
+simshow(projected_fan, γ=0.01)
 ```
 ![](../assets/parallel_geometry_cone.png)
 

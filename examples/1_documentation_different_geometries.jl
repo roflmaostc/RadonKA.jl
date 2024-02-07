@@ -62,22 +62,22 @@ projection_small = iradon(sinogram_small, angles; geometry=geometry_small);
 simshow(projection_small)
 
 # ╔═╡ da663a25-6dcd-4664-9bd1-c84970e58346
-md"# Similar to Cone Beam Tomography"
+md"# Similar to fan Beam Tomography"
 
 # ╔═╡ 65d32c65-6e1f-417b-aba3-3c34dac35e05
-geometry_cone = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, range(-(N-1)÷4, (N-1)÷4, N-1))
+geometry_fan = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, range(-(N-1)÷4, (N-1)÷4, N-1))
 
 # ╔═╡ 26036d0c-2d5e-436c-8343-c4cd66c362c6
 N-100
 
 # ╔═╡ 37d760fa-74e6-47d1-b8e6-3315c1747b4c
-projected_cone = iradon(sinogram, angles; geometry=geometry_cone);
+projected_fan = iradon(sinogram, angles; geometry=geometry_fan);
 
 # ╔═╡ 878121c5-4ad5-477b-88c7-f53df7510052
-simshow(projected_cone, γ=0.01)
+simshow(projected_fan, γ=0.01)
 
 # ╔═╡ afe43c8c-cb98-411b-af8f-1228983ee2e0
-md"# Extreme Cone Beam Tomography"
+md"# Extreme fan Beam Tomography"
 
 # ╔═╡ 7b0c8263-50d0-4569-96cb-297b4746ece3
 geometry_extreme = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, zeros((199,)))
