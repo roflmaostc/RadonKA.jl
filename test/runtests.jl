@@ -14,6 +14,15 @@ using Zygote
 
         @test iradon(sinogram[:, 1, :], Float32[π / 4 + π]) == Float32[0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.96446574 0.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.4142138 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 1.4142135 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 1.4142132 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 1.4142137 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.4142133 0.0 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.3486991f-6 0.0; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0] 
     end
+    
+    @testset "Simple API test" begin
+        array = ones((6,6))
+        @test radon(array, [0]) ≈ [1.0; 3.7320508075688767; 5.0; 3.7320508075688767; 1.0;;]
+        @test radon(array, [0], geometry = RadonParallelCircle(6, -2:2:2)) ≈ [1.0; 5.0; 1.0;;]
+        @test radon(array, [π], geometry = RadonParallelCircle(6, -2:2:2)) ≈ [1.0; 5.0; 1.0;;]
+        @test radon(array, [0], geometry=RadonParallelCircle(6, -2:2, [12, 10, 8, 7, -3])) ≈ radon(array, [0], geometry=RadonParallelCircle(6, -2:2)) .* [12, 10, 8, 7, -3]
+        @test radon(array, [0], geometry=RadonFlexibleCircle(6, -2:2, -2:2)) ≈ radon(array, [0], geometry=RadonParallelCircle(6, -2:2))
+    end
 
     @testset "Exponential iradon" begin
 	    sinogram = zeros(Float64, (9, 1))

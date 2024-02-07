@@ -61,6 +61,53 @@ julia> radon(arr, [0, π/4, π/2])
  1.0  1.41421  1.0
  0.0  0.0      0.0
 ```
+
+ ## Choose different detector
+```jldoctest
+julia> array = ones((6,6))
+6×6 Matrix{Float64}:
+ 1.0  1.0  1.0  1.0  1.0  1.0
+ 1.0  1.0  1.0  1.0  1.0  1.0
+ 1.0  1.0  1.0  1.0  1.0  1.0
+ 1.0  1.0  1.0  1.0  1.0  1.0
+ 1.0  1.0  1.0  1.0  1.0  1.0
+ 1.0  1.0  1.0  1.0  1.0  1.0
+
+julia> radon(array, [0])
+5×1 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+ 1.0
+ 3.7320508075688767
+ 5.0
+ 3.7320508075688767
+ 1.0
+
+julia> radon(array, [0], geometry=RadonParallelCircle(6, -2:2))
+5×1 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+ 1.0
+ 3.7320508075688767
+ 5.0
+ 3.7320508075688767
+ 1.0
+
+julia> radon(array, [0], geometry=RadonParallelCircle(6, -2:2:2))
+3×1 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+ 1.0
+ 5.0
+ 1.0
+```
+
+ ## Apply some weights on the rays
+```jldoctest
+julia> array = ones((6,6));
+
+julia> radon(array, [0], geometry=RadonParallelCircle(6, -2:2, [2,1,0,1,2]))
+5×1 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
+ 2.0
+ 3.7320508075688767
+ 0.0
+ 3.7320508075688767
+ 2.0
+```
 """
 function radon(img::AbstractArray{T, 3}, angles_T::AbstractVector;
         geometry=RadonParallelCircle(size(img, 1), -(size(img,1)-1)÷2:(size(img,1)-1)÷2),
@@ -89,6 +136,10 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     in_height = similar(img, (size(geometry.in_height, 1),))
     in_height .= typeof(in_height)(geometry.in_height) 
     
+
+    weights = similar(img, (size(geometry.in_height, 1),))
+    weights .= typeof(weights)(geometry.weights) 
+
     if geometry isa RadonFlexibleCircle
         out_height = similar(img, (size(geometry.out_height, 1),))
         out_height .= typeof(out_height)(geometry.out_height) 
@@ -115,7 +166,8 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
 
     # of the kernel goes
     kernel! = radon_kernel!(backend)
-    kernel!(sinogram::AbstractArray{T}, img, in_height, out_height, angles, mid, radius, absorb_f,
+    kernel!(sinogram::AbstractArray{T}, img, weights, in_height, 
+            out_height, angles, mid, radius, absorb_f,
     		ndrange=(N_sinogram, N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
     return sinogram
@@ -123,7 +175,9 @@ end
 
 @inline inside_circ(ii, jj, mid, radius) = (ii - mid)^2 + (jj - mid)^2 ≤ radius ^2 
 
-@kernel function radon_kernel!(sinogram::AbstractArray{T}, img::AbstractArray{T}, in_height, out_height, angles, mid, radius, absorb_f) where {T}
+@kernel function radon_kernel!(sinogram::AbstractArray{T}, img::AbstractArray{T}, 
+                               weights, in_height, out_height, angles, mid,
+                               radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
@@ -131,6 +185,9 @@ end
     @inbounds ybegin = T(in_height[i])
     @inbounds yend = T(out_height[i])
 
+
+    # weights
+    @inbounds weight = weights[i]
     # map the detector positions on a circle
     # also rotate according to the angle
     x_dist_rot, y_dist_rot, x_dist_end_rot, y_dist_end_rot = 
@@ -165,7 +222,8 @@ end
         # calculate intersection distance
         distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
         # add value to ray, potentially attenuate by attenuated exp factor
-        @inbounds tmp += distance * img[icell, jcell, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        @inbounds tmp += weight * distance * 
+                img[icell, jcell, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
         xold, yold = xnew, ynew
     end 
     @inbounds sinogram[i, iangle, i_z] = tmp

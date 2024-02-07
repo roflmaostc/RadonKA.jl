@@ -7,7 +7,6 @@ using Atomix
 using ChainRulesCore
 using PrecompileTools
 
-
 include("geometry.jl")
 include("utils.jl")
 include("radon.jl")

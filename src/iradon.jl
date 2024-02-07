@@ -53,6 +53,9 @@ function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geomet
     angles = similar(sinogram, (size(angles_T, 1),))
     angles .= typeof(angles)(angles_T) 
     
+    weights = similar(sinogram, (size(geometry.in_height, 1),))
+    weights .= typeof(weights)(geometry.weights) 
+
     in_height = similar(sinogram, (size(geometry.in_height, 1),))
     in_height .= typeof(in_height)(geometry.in_height) 
 
@@ -81,19 +84,23 @@ function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geomet
 
     # of the kernel goes
     kernel! = iradon_kernel2!(backend)
-    kernel!(img, sinogram, in_height, out_height, angles, mid, radius, absorb_f,
+    kernel!(img, sinogram, weights, in_height, out_height, angles, mid, radius, absorb_f,
             ndrange=(size(sinogram, 1), N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
     return img 
 end
 
-@kernel function iradon_kernel2!(img::AbstractArray{T}, sinogram::AbstractArray{T}, in_height, out_height, angles, mid, radius, absorb_f) where {T}
+@kernel function iradon_kernel2!(img::AbstractArray{T}, sinogram::AbstractArray{T}, weights, in_height,
+                                 out_height, angles, mid, radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
 
     @inbounds ybegin = T(in_height[i])
     @inbounds yend = T(out_height[i])
+    
+     # weights
+    @inbounds weight = weights[i]
 
     # map the detector positions on a circle
     # also rotate according to the angle
@@ -131,7 +138,8 @@ end
         # calculate intersection distance
         distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
         # add value to ray, potentially attenuate by attenuated exp factor
-        @inbounds Atomix.@atomic img[icell, jcell, i_z] += distance * sinogram[i, iangle, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        @inbounds Atomix.@atomic img[icell, jcell, i_z] += weight * distance * 
+                sinogram[i, iangle, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
         xold, yold = xnew, ynew
     end 
 end
