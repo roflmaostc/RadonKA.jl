@@ -1,6 +1,7 @@
 # RadonKA.jl
 A simple yet sufficiently fast Radon and inverse Radon (iradon) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
-It offers multithreading and CUDA support and hence outperforms any existing Julia snippets. On CUDA it is faster than Matlab or roughly the same speed as ASTRA.
+It offers multithreading and CUDA support and outperforms any existing Julia Radon transforms (at least the ones we are aware of). 
+On CUDA it is faster much than Matlab and it offers the same or faster speed than ASTRA.
 
 #### ⚠️ This package is still very young. I would be happy to receive any feedback or if we can improve anything, just open an issue! ⚠️
 
@@ -16,6 +17,7 @@ It offers multithreading and CUDA support and hence outperforms any existing Jul
 * [x] parallel `radon` and `iradon` (`?RadonParallelCircle`)
 * [x] attenuated `radon` and `iradon` (see the parameter `μ`) and see this [paper](https://iopscience.iop.org/article/10.1088/0266-5611/17/1/309/meta) as reference)
 * [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (fan beam could be a special case if this) (`?RadonFlexibleCircle`)
+* [x] different strength weighting of rays 
 * [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl)
 * [x] tested on `CPU()` and `CUDABackend()`
 * [x] registered adjoint rules for both `radon` and `iradon`
@@ -49,15 +51,27 @@ simshow(backproject)
 <a  href="docs/src/assets/radonka_iradon.png"><img src="docs/src/assets/radonka_iradon.png"  width="308"></a>
 
 # Examples
-See either the [documentation](https://roflmaostc.github.io/RadonKA.jl/dev/tutorial).
-Otherwise, this [example](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/example_radon_iradon.jl) shows the main features, including CUDA support.
-There is one tutorial about [Gradient Descent optimization](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/CT_with_optimizer.jl).
-Another one covers how the Radon transform is used in [Tomographic Volumetric Additive Manufacturing](https://github.com/roflmaostc/RadonKA.jl/blob/main/examples/Tomographic_Volumetric_Additive_Manufacturing_with_Refraction.jl).
-One notebook explains how you can use the arbitrary geometries. See [here](examples/documentation_different_geometries.jl).
+See the [documentation](https://roflmaostc.github.io/RadonKA.jl/dev/tutorial).
+You can also run the examples locally.
+Download this repository and then do the following in your REPL:
+```julia
+julia> cd("examples/")
+
+julia> using Pkg; Pkg.activate(".")
+  Activating project at `~/.julia/dev/RadonKA.jl/examples`
+
+julia> using Pluto; Pluto.run()
+```
+A browser should open.
+The following examples show case the ability of this package:
+* Simple `radon` and `iradon`: [Pluto notebook](examples/0_example_radon_iradon.jl)
+* Different geometries: [Pluto notebook](examples/0_example_radon_iradon.jl)
+* Reconstruction of a CT dataset with an optimizer: [Pluto notebook](examples/2_CT_with_optimizer.jl)
+* How this package is used in Tomographic Volumetric Additive Manufacturing (3D printing): [Pluto notebook](examples/4_Tomographic_Volumetric_Additive_Manufacturing_with_Refraction.jl)
 
 # Development
 File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](https://github.com/roflmaostc/RadonKA.jl) if you encounter any problems.
-
+You can also join [my conference room](https://epfl.zoom.us/my/wechsler). Give me a minute to join!
 
 # Similar packages
 
