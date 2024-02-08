@@ -3,10 +3,10 @@ using RadonKA, CUDA, BenchmarkTools
 
 
 
-for sz in [(512,512,100), (256, 256)]
+for sz in [(512,512,100), (1920, 1920)]
     for d in [Array, CuArray]
         @show d, sz
-        angles = d(range(0f0, 360f0, 360))
+        angles = d(range(0f0, 2π, 500))
         arr = d(randn(Float32, sz))
         iarr = radon(arr, angles)
 
