@@ -35,17 +35,22 @@ julia> ]add RadonKA
 using RadonKA, ImageShow, ImageIO, TestImages
 
 img = Float32.(testimage("resolution_test_512"))
-
 angles = range(0f0, 2f0π, 500)[begin:end-1]
 
-# 0.196049 seconds (145 allocations: 1009.938 KiB)
+# 0.085398 seconds (260 allocations: 1.006 MiB)
 @time sinogram = radon(img, angles);
-
-# 0.268649 seconds (147 allocations: 1.015 MiB)
+# 0.127043 seconds (251 allocations: 1.036 MiB)
 @time backproject = RadonKA.iradon(sinogram, angles);
 
 simshow(sinogram)
 simshow(backproject)
+
+using CUDA
+img_c = CuArray(img)
+# 0.003363 seconds (244 CPU allocations: 18.047 KiB) (7 GPU allocations: 1007.934 KiB, 0.96% memmgmt time)
+CUDA.@time sinogram = radon(img_c, angles);
+# 0.005928 seconds (218 CPU allocations: 16.109 KiB) (7 GPU allocations: 1.012 MiB, 0.49% memmgmt time)
+CUDA.@time backproject = RadonKA.iradon(sinogram, angles);
 ```
 <a  href="docs/src/assets/sinogram.png"><img src="docs/src/assets/sinogram.png"  width="300"></a>
 <a  href="docs/src/assets/radonka_iradon.png"><img src="docs/src/assets/radonka_iradon.png"  width="308"></a>
