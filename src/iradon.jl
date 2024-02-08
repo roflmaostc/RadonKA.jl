@@ -16,7 +16,6 @@ Conceptually the adjoint operation of [`radon`](@ref). Intuitively, the `iradon`
 See also [`radon`](@ref).
 
 # Example
-# # Examples
 ```jldoctest
 julia> arr = zeros((5,2)); arr[2,:] .= 1; arr[4, :] .= 1
 2-element view(::Matrix{Float64}, 4, :) with eltype Float64:
