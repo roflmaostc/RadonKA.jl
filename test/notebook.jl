@@ -27,19 +27,19 @@ end
 simshow(sinogram[:, :, 1])
 
 # ╔═╡ 7fcb40e4-4530-4ce1-a267-84b46309ab2a
-@show iradon(sinogram, [0f0, π*0.5])
+@show backproject(sinogram, [0f0, π*0.5])
 
 # ╔═╡ c4cd76e9-1685-40b4-bde6-2d1b6c03fa09
-simshow(iradon(sinogram, [0f0, π*0.5]))[:, :, 1]
+simshow(backproject(sinogram, [0f0, π*0.5]))[:, :, 1]
 
 # ╔═╡ 49629e15-c5f4-42ff-b196-24e13124f8f3
-@show I_r = iradon(sinogram, Float32[π/4 + π])
+@show I_r = backproject(sinogram, Float32[π/4 + π])
 
 # ╔═╡ be118fec-3051-47a4-bf15-ac9d8d8c8e2e
-sum(iradon(sinogram, Float32[2pi - pi/4]))
+sum(backproject(sinogram, Float32[2pi - pi/4]))
 
 # ╔═╡ 80970ba6-a09f-46db-8b15-fa7226cdc400
-sum(iradon(sinogram, Float32[0]))
+sum(backproject(sinogram, Float32[0]))
 
 # ╔═╡ c969f6d0-cfcc-4846-b970-9f6b734ac7cd
 simshow(I_r[:, :, 1])
@@ -64,16 +64,16 @@ begin
 end
 
 # ╔═╡ 8d9b6ea3-bbc0-48c1-a824-9749d6b8df0f
-sum(iradon(sinogram_big, [0f0])[:, :, 1])
+sum(backproject(sinogram_big, [0f0])[:, :, 1])
 
 # ╔═╡ 73a756d9-9984-4452-b90a-9cced7959813
-sum(iradon(sinogram_big, [pi/4f0])[:, :, 1])
+sum(backproject(sinogram_big, [pi/4f0])[:, :, 1])
 
 # ╔═╡ b1607e05-d9ac-46cc-83b0-0f2b2c433059
-simshow(iradon(sinogram_big, [3.4f0])[:, :, 1])
+simshow(backproject(sinogram_big, [3.4f0])[:, :, 1])
 
 # ╔═╡ 773e3961-e398-4d4b-a5e6-76b457561976
-simshow(iradon(sinogram_big, [0])[:, :, 1])
+simshow(backproject(sinogram_big, [0])[:, :, 1])
 
 # ╔═╡ 5103d58e-34c8-4b9c-a0ab-c4f88f436186
 md"# Radon"
@@ -228,7 +228,7 @@ simshow(array3)
 simshow(sinogram2[:,:,1])
 
 # ╔═╡ 2a3fe939-77b0-4388-9b9e-f9bee9e35e1b
-I_2 = iradon(sinogram2, angles2);
+I_2 = backproject(sinogram2, angles2);
 
 # ╔═╡ a33c5c99-00c3-437d-bfa7-2c0d12fb2339
 simshow(I_2[:,:,1])
@@ -240,10 +240,10 @@ simshow(sinogram2)
 array_filtered = filtered_backprojection(sinogram2, angles2)
 
 # ╔═╡ ecb578ff-4dca-4260-9124-0bc17499d071
-array_iradon = iradon(sinogram2, angles2)
+array_backproject = backproject(sinogram2, angles2)
 
 # ╔═╡ 2adbe3a7-c0bf-4e2d-bdec-4f62e29055af
-sum(array_iradon)
+sum(array_backproject)
 
 # ╔═╡ 65781501-0237-4caf-aa4e-4a83338e4658
 simshow(array_filtered / sum(array_filtered))

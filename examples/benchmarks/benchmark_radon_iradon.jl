@@ -60,13 +60,13 @@ simshow(sinogram)
 save("/tmp/radonka_sinogram.png", sinogram ./ maximum(sinogram));
 
 # ╔═╡ a11fe70a-3425-4335-ba09-00efbae6c9af
- sample_iradon = iradon(sinogram,angles);
+ sample_backproject = backproject(sinogram,angles);
 
 # ╔═╡ 29f7d88c-3bab-43a9-a253-d3bcfc98b706
-save("/tmp/radonka_iradon.png", sample_iradon ./ maximum(sample_iradon));
+save("/tmp/radonka_backproject.png", sample_backproject ./ maximum(sample_backproject));
 
 # ╔═╡ da297929-f4f9-4fa2-b860-cfc159ac39f1
-@benchmark sample_iradon = iradon($sinogram, $angles)
+@benchmark sample_backproject = backproject($sinogram, $angles)
 
 # ╔═╡ a61ea8f2-6329-4b6b-b4a2-1f5ac17bc618
 sinogram_c = radon(sample_2D_c, angles_c, backend=CUDABackend())
@@ -75,7 +75,7 @@ sinogram_c = radon(sample_2D_c, angles_c, backend=CUDABackend())
 @benchmark CUDA.@sync sinogram_c = radon($sample_2D_c, $angles_c, backend=CUDABackend())
 
 # ╔═╡ 1b8e4e3f-d9db-4646-8ccf-840c21ecc328
-@benchmark CUDA.@sync sample_iradon_c = iradon($sinogram_c, $angles_c, backend=CUDABackend())
+@benchmark CUDA.@sync sample_backproject_c = backproject($sinogram_c, $angles_c, backend=CUDABackend())
 
 # ╔═╡ c602a8df-d646-4f31-9d6f-902456f07ae5
 md"# 3D"
@@ -93,7 +93,7 @@ sample_3D_c = CuArray(sample_3D)
 @benchmark radon($sample_3D, $angles)
 
 # ╔═╡ b5825676-6600-4cbe-865b-788ef1567b85
-@benchmark iradon($sinogram_3D, $angles)
+@benchmark backproject($sinogram_3D, $angles)
 
 # ╔═╡ 494190e4-e28a-42ad-b1c1-926a740ea2cb
 sinogram_3D_c = radon(sample_3D_c, angles_c, backend=CUDABackend())
@@ -102,7 +102,7 @@ sinogram_3D_c = radon(sample_3D_c, angles_c, backend=CUDABackend())
 @benchmark CUDA.@sync radon($sample_3D_c, $angles_c, backend=CUDABackend())
 
 # ╔═╡ cd166ef5-863f-48b9-bb89-a2a32daa166b
-@benchmark CUDA.@sync iradon($sinogram_3D_c, $angles_c, backend=CUDABackend())
+@benchmark CUDA.@sync backproject($sinogram_3D_c, $angles_c, backend=CUDABackend())
 
 # ╔═╡ Cell order:
 # ╠═e5a21d4e-928b-11ee-3909-53f97530eefa

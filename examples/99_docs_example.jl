@@ -36,7 +36,7 @@ angles = range(0f0, 2f0π, 500)[begin:end-1]
 simshow(sinogram)
 
 # ╔═╡ 451af1b2-c840-4ae8-935f-eb7965e7104b
-@time backproject = RadonKA.iradon(sinogram, angles);
+@time backproject = RadonKA.backproject(sinogram, angles);
 
 # ╔═╡ 42c42599-96b4-4a69-bbbd-5602cca700f4
 [simshow(img) simshow(backproject)]

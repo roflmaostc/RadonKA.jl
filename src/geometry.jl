@@ -3,13 +3,13 @@ export RadonGeometry, RadonParallelCircle, RadonFlexibleCircle
 """
     abstract type RadonGeometry end
 
-Abstract supertype for all geometries which are supported by `radon` and `iradon`.
+Abstract supertype for all geometries which are supported by `radon` and `backproject`.
 
 List of geometries:
 * [`RadonParallelCircle`](@ref)
 * [`RadonFlexibleCircle`](@ref)
 
-See [`radon`](@ref) and [`iradon`](@ref) how to apply.
+See [`radon`](@ref) and [`backproject`](@ref) how to apply.
 """
 abstract type RadonGeometry end
 
@@ -25,7 +25,7 @@ So the resulting sinogram has the shape: `(9, length(angles), size(array, 3))`.
 
 - `weights` can weight each of the rays with different strength. Per default `weights = 0 .* in_height .+ 1`
 
-See [`radon`](@ref) and [`iradon`](@ref) how to apply.
+See [`radon`](@ref) and [`backproject`](@ref) how to apply.
 """
 struct RadonParallelCircle{T, T2} <: RadonGeometry
     N::Int
@@ -56,7 +56,7 @@ This is an extreme form of fan beam tomography.
 
 - `weights` can weight each of the rays with different strength. Per default `weights = 0 .* in_height .+ 1`
 
-See [`radon`](@ref) and [`iradon`](@ref) how to apply.
+See [`radon`](@ref) and [`backproject`](@ref) how to apply.
 """
 struct RadonFlexibleCircle{T, T2, T3} <: RadonGeometry
     N::Int

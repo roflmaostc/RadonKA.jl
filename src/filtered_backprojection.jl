@@ -17,5 +17,5 @@ function filtered_backprojection(sinogram::AbstractArray{T}, θs::AbstractVector
 
     p = plan_fft(sinogram, (1,))
     sinogram = real(inv(p) * (p * sinogram .* ifftshift(filter)))
-    return iradon(sinogram, θs; geometry, μ)
+    return backproject(sinogram, θs; geometry, μ)
 end

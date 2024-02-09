@@ -32,7 +32,7 @@ Works either with a `AbstractArray{T, 3}` or `AbstractArray{T, 2}`.
 `θs` is a vector or range storing the angles in radians.
 
 In principle, all backends of KernelAbstractions.jl should work but are not tested. CUDA and CPU arrays are actively tested.
-Both `radon` and [`iradon`](@ref) are differentiable with respect to `I`.
+Both `radon` and [`backproject`](@ref) are differentiable with respect to `I`.
 
 # Keywords
 ## `μ=nothing` - Attenuated Radon Transform
@@ -47,7 +47,7 @@ See `?RadonGeometries` for a full list of geometries. There is also the very fle
 
 
 
-See also [`iradon`](@ref).
+See also [`backproject`](@ref).
 
 # Example
 The reason the sinogram has the value `1.41421` for the diagonal ray `π/4` is,
@@ -236,7 +236,7 @@ function ChainRulesCore.rrule(::typeof(_radon), array::AbstractArray, angles,
                               geometry, μ) 
     res = _radon(array, angles, geometry, μ)
     function pb_radon(ȳ)
-        ad = _iradon(unthunk(ȳ), angles, geometry, μ)
+        ad = _backproject(unthunk(ȳ), angles, geometry, μ)
         return NoTangent(), ad, NoTangent(), NoTangent(), NoTangent()
     end
     return res, pb_radon 
