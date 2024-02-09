@@ -15,11 +15,11 @@
  sinogram = radon(sample_2D, angles);
  @btime sinogram = radon($sample_2D, $angles);
  simshow(sinogram)
- @btime sample_iradon = iradon($sinogram, $angles);
+ @btime sample_backproject = backproject($sinogram, $angles);
  
  @btime CUDA.@sync sinogram_c = radon($sample_2D_c, $angles_c);
  sinogram_c = radon(sample_2D_c, angles_c);
- @btime CUDA.@sync sample_iradon_c = iradon($sinogram_c, $angles_c);
+ @btime CUDA.@sync sample_backproject_c = backproject($sinogram_c, $angles_c);
  
  
  sample_3D = randn(Float32, (512, 512, 100));
@@ -27,11 +27,11 @@
  
  sinogram_3D = radon(sample_3D, angles);
  @btime radon($sample_3D, $angles)
- @btime iradon($sinogram_3D, $angles)
+ @btime backproject($sinogram_3D, $angles)
  
  sinogram_3D_c = radon(sample_3D_c, angles_c)
  @btime CUDA.@sync radon($sample_3D_c, $angles_c)
- @btime CUDA.@sync iradon($sinogram_3D_c, $angles_c)</code></pre><p><img src="../assets/radonka_sinogram.png" alt/> <img src="../assets/radonka_iradon.png" alt/></p><h2 id="Matlab-(R2023a)"><a class="docs-heading-anchor" href="#Matlab-(R2023a)">Matlab (R2023a)</a><a id="Matlab-(R2023a)-1"></a><a class="docs-heading-anchor-permalink" href="#Matlab-(R2023a)" title="Permalink"></a></h2><pre><code class="language-matlab hljs">arr = single(imread(&quot;/tmp/sample.jpg&quot;)); 
+ @btime CUDA.@sync backproject($sinogram_3D_c, $angles_c)</code></pre><p><img src="../assets/radonka_sinogram.png" alt/> <img src="../assets/radonka_backproject.png" alt/></p><h2 id="Matlab-(R2023a)"><a class="docs-heading-anchor" href="#Matlab-(R2023a)">Matlab (R2023a)</a><a id="Matlab-(R2023a)-1"></a><a class="docs-heading-anchor-permalink" href="#Matlab-(R2023a)" title="Permalink"></a></h2><pre><code class="language-matlab hljs">arr = single(imread(&quot;/tmp/sample.jpg&quot;)); 
 %arr = rand(1920, 1920, &quot;single&quot;);
 theta = linspace(0, 360, 500);
 
@@ -42,10 +42,10 @@ R = R / max(R(:));
 imwrite(R, &quot;/tmp/matlab_sinogram.png&quot;);
 
 tic; 
-iR = iradon(R, theta, &quot;linear&quot;, &quot;none&quot;);
+iR = backproject(R, theta, &quot;linear&quot;, &quot;none&quot;);
 toc;
 iR = iR / max(iR(:));
-imwrite(iR, &quot;/tmp/matlab_iradon.png&quot;);
+imwrite(iR, &quot;/tmp/matlab_backproject.png&quot;);
 
 
 
@@ -64,9 +64,9 @@ toc;
 
 tic;
 for i = 1:size(y, 1)
-    ix(i, :, :) = iradon(squeeze(y(i, :, :)), theta);
+    ix(i, :, :) = backproject(squeeze(y(i, :, :)), theta);
 end
-toc;</code></pre><p><img src="../assets/matlab_sinogram.png" alt/> <img src="../assets/matlab_iradon.png" alt/></p><h2 id="Astra"><a class="docs-heading-anchor" href="#Astra">Astra</a><a id="Astra-1"></a><a class="docs-heading-anchor-permalink" href="#Astra" title="Permalink"></a></h2><p>Some of the benchmarks did not run properly or were providing non-sense. Astra&#39;s docs are unfortunately slightly confusing...</p><pre><code class="language-python hljs">import numpy as np
+toc;</code></pre><p><img src="../assets/matlab_sinogram.png" alt/> <img src="../assets/matlab_backproject.png" alt/></p><h2 id="Astra"><a class="docs-heading-anchor" href="#Astra">Astra</a><a id="Astra-1"></a><a class="docs-heading-anchor-permalink" href="#Astra" title="Permalink"></a></h2><p>Some of the benchmarks did not run properly or were providing non-sense. Astra&#39;s docs are unfortunately slightly confusing...</p><pre><code class="language-python hljs">import numpy as np
 import matplotlib.pyplot as plt
 import imageio.v3 as iio
 import astra
@@ -137,4 +137,4 @@ alg_id = astra.algorithm.create(cfg)
 %time
 astra.algorithm.run(alg_id, 1)
 rec = astra.data3d.get(rec_id)
-np.copy(rec)</code></pre><p><img src="../assets/astra_sinogram.png" alt/> <img src="../assets/astra_iradon.png" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../geometries/">« Specifying different geometries and absorption</a><a class="docs-footer-nextpage" href="../functions/">Function Docstrings »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Thursday 8 February 2024 14:58">Thursday 8 February 2024</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+np.copy(rec)</code></pre><p><img src="../assets/astra_sinogram.png" alt/> <img src="../assets/astra_backproject.png" alt/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../geometries/">« Specifying different geometries and absorption</a><a class="docs-footer-nextpage" href="../functions/">Function Docstrings »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 9 February 2024 16:22">Friday 9 February 2024</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
