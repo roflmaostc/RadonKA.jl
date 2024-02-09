@@ -6,9 +6,9 @@ Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeF
 |                   |RadonKA.jl CPU | RadonKA.jl GPU    | Matlab CPU | Astra CPU | Astra GPU |
 |-------------------|---------------|-------------------|------------|-----------|-----------|
 |2D sample - Radon  |1.1s           |0.07s              |0.39s       |7.0s       |0.025s     |
-|2D sample - IRadon |1.4s           |0.50s              |0.37s       |6.4s       |N/A        |
+|2D sample - Backprojection |1.4s           |0.50s              |0.37s       |6.4s       |N/A        |
 |3D sample - Radon  |7.4s           |0.28s              |9.01s       |N/A        |1.12s      |
-|3D sample - IRadon |7.9s           |0.53s              |3.24s       |N/A        |N/A        |
+|3D sample - Backprojection |7.9s           |0.53s              |3.24s       |N/A        |N/A        |
 
 
 

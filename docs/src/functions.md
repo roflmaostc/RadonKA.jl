@@ -3,7 +3,7 @@
 radon
 ```
 
-## IRadon
+## Backproject (adjoint Radon)
 ```@docs
 backproject
 backproject_filtered

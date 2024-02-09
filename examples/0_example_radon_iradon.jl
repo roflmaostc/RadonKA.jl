@@ -100,7 +100,7 @@ simshow(sinogram[:, :, i_z])
 simshow(Array(sinogram_c[:, :, i_z]))
 
 # ╔═╡ edbf1577-0fd4-4261-bd04-499bc1a0debd
-md"# IRadon Transform"
+md"# Backproject (adjoint Radon)"
 
 # ╔═╡ 7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
 @time backproject = RadonKA.backproject(sinogram, angles);
