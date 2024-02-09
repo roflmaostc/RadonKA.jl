@@ -1,7 +1,5 @@
 export backproject
 
-@deprecate iradon backproject
-
 # handle 2D
 function backproject(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1};
         geometry=RadonParallelCircle(size(sinogram,1) + 1,-(size(sinogram,1))÷2:(size(sinogram,1))÷2), μ=nothing) where {T, T2}
