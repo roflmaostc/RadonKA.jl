@@ -15,10 +15,9 @@ On CUDA it is faster much than Matlab and it offers the same or faster speed tha
 * [x] For 2D and 3D arrays 
 * [x] parallel `radon` and `backproject` (`?RadonParallelCircle`)
 * [x] attenuated `radon` and `backproject` (see the parameter `μ`) and see this [paper](https://iopscience.iop.org/article/10.1088/0266-5611/17/1/309/meta) as reference)
-* [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (fan beam could be a special case if this) (`?RadonFlexibleCircle`)
+* [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (fan beam could be a special case of this) (`?RadonFlexibleCircle`)
 * [x] different strength weighting of rays 
-* [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl)
-* [x] tested on `CPU()` and `CUDABackend()`
+* [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) (tested on `CPU()` and `CUDABackend()`)
 * [x] registered adjoint rules for both `radon` and `backproject`
 * [x] high performance however not ultra high performance. On par with ASTRA, on CUDA faster than Matlab.
 * [x] simple and extensible API
@@ -61,7 +60,7 @@ Download this repository and then do the following in your REPL:
 ```julia
 julia> cd("examples/")
 
-julia> using Pkg; Pkg.activate(".")
+julia> using Pkg; Pkg.activate("."); Pkg.instantiate()
   Activating project at `~/.julia/dev/RadonKA.jl/examples`
 
 julia> using Pluto; Pluto.run()
