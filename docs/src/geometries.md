@@ -23,7 +23,7 @@ sinogram[1:5:end] .= 1
 
 geometry_parallel = RadonParallelCircle(N, -(N-1)÷2:(N-1)÷2)
 
-projection_parallel = iradon(sinogram, angles; geometry=geometry_parallel);
+projection_parallel = backproject(sinogram, angles; geometry=geometry_parallel);
 
 simshow(projection_parallel)
 ```
@@ -37,7 +37,7 @@ sinogram_small[1:3:end] .= 1
 
 geometry_small = RadonParallelCircle(200, -49:49)
 
-projection_small = iradon(sinogram_small, angles; geometry=geometry_small);
+projection_small = backproject(sinogram_small, angles; geometry=geometry_small);
 
 simshow(projection_small)
 ```
@@ -54,7 +54,7 @@ The second range indicates the position upon exit of the circle.
 ```julia
 geometry_fan = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, range(-(N-1)÷4, (N-1)÷4, N-1))
 
-projected_fan = iradon(sinogram, angles; geometry=geometry_fan);
+projected_fan = backproject(sinogram, angles; geometry=geometry_fan);
 
 simshow(projected_fan, γ=0.01)
 ```
@@ -63,7 +63,7 @@ simshow(projected_fan, γ=0.01)
 ```julia
 geometry_extreme = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, zeros((199,)))
 
-projected_extreme = iradon(sinogram, angles; geometry=geometry_extreme);
+projected_extreme = backproject(sinogram, angles; geometry=geometry_extreme);
 
 simshow(projected_extreme, γ=0.01)
 ```
@@ -74,7 +74,7 @@ For example, if in your application some rays are stronger than others you can i
 
 ```julia
 geometry_weight = RadonParallelCircle(N, -(N-1)÷2:(N-1)÷2, abs.(-(N-1)÷2:(N-1)÷2))
-projection_weight = iradon(sinogram, angles; geometry=geometry_weight);
+projection_weight = backproject(sinogram, angles; geometry=geometry_weight);
 
 simshow(projection_weight)
 ```
@@ -85,7 +85,7 @@ simshow(projection_weight)
 The ray gets some attenuation with `exp(-μ*x)` where `x` is the distance traveled to the entry point of the circle. `μ` is in units of pixel.
 
 ```julia
-projected_exp = iradon(sinogram, angles; geometry=geometry_extreme, μ=0.04);
+projected_exp = backproject(sinogram, angles; geometry=geometry_extreme, μ=0.04);
 
 simshow(projected_exp)
 ```

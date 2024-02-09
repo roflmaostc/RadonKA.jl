@@ -73,10 +73,10 @@ md"""# Simple Backprojection"""
 img_bp = filtered_backprojection(measurement, angles);
 
 # ╔═╡ 49e59001-0e8d-4872-ae50-47c38486b3fd
-img_iradon = iradon(measurement, angles);
+img_backproject = backproject(measurement, angles);
 
 # ╔═╡ 6fac5606-2350-4f22-9f35-120936114d5a
-[simshow(img_bp) simshow(img_iradon)]
+[simshow(img_bp) simshow(img_backproject)]
 
 # ╔═╡ 1feccdec-cc35-4cc8-9a76-0e0e99bc7be3
 md"# Optimization with gradient descent

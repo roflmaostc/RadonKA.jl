@@ -156,7 +156,7 @@ Revise.errors()
 geometry = RadonKA.RadonFlexibleCircle(size(target, 1), ray_startpoints, ray_endpoints)
 
 # ╔═╡ 85b6e54c-3256-4ba8-9889-56be82de0203
-simshow(Array(iradon(togoc(sinogram), togoc(range(0, 2π, kk + 1)[1:end-1]); geometry, μ=0.01)), γ=0.6)
+simshow(Array(backproject(togoc(sinogram), togoc(range(0, 2π, kk + 1)[1:end-1]); geometry, μ=0.01)), γ=0.6)
 
 # ╔═╡ 5d55464f-c7d9-4e45-a1e7-907c2137be95
 md"# Define Optimization algorithm
@@ -198,7 +198,7 @@ function iter!(buffer, img, θs, μ; clip_sinogram=true, geometry)
 		sinogram .= max.(sinogram, 0)
 	end
 	
-	img_recon = iradon(sinogram, θs; μ, geometry)
+	img_recon = backproject(sinogram, θs; μ, geometry)
 	img_recon ./= maximum(img_recon)
 	buffer .= max.(img_recon, 0)
 	return buffer, sinogram
@@ -224,13 +224,13 @@ function OSMO(img::AbstractArray{T}, θs, μ=nothing;
 		guess[isobject] .+= max.(0, thresholds[2] .- tmp[isobject])
 	end
 	
-	printed = iradon(s, θs; μ, geometry)
+	printed = backproject(s, θs; μ, geometry)
 	printed ./= maximum(printed)
 	return guess, s, printed
 end
 
 # ╔═╡ 12e7c6b7-fcf3-44e4-9d80-785704d93cb5
-fwd = x -> iradon(max.(0,x), angles; geometry)
+fwd = x -> backproject(max.(0,x), angles; geometry)
 
 # ╔═╡ 942e1cf7-a47b-43af-a460-1ea896a2c9b8
  f, g! = make_fg!(fwd, target, (0.65, 0.75))
@@ -266,19 +266,19 @@ simshow(Array(printed), cmap=:turbo)
 simshow(Array(fwd(res.minimizer)), cmap=:turbo)
 
 # ╔═╡ 7c998816-b4de-4dbf-977b-bdab9355be79
-simshow(Array(iradon(patterns[:, 96:96], togoc(angles[96:96]); μ=1/350f0, geometry)), cmap=:turbo)
+simshow(Array(backproject(patterns[:, 96:96], togoc(angles[96:96]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ 28d8c378-b818-4d61-b9d4-a06ad7cc21e3
-simshow(Array(iradon(patterns[:, 306:306], togoc(angles[306:306]); μ=1/350f0, geometry)), cmap=:turbo)
+simshow(Array(backproject(patterns[:, 306:306], togoc(angles[306:306]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ beb61bb1-3f7c-4301-92ca-5418bc0445cf
-simshow(Array(iradon(patterns[:, 1:1], togoc(angles[1:1]); μ=1/350f0, geometry)), cmap=:turbo)
+simshow(Array(backproject(patterns[:, 1:1], togoc(angles[1:1]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ 88895d8d-432e-4337-a51c-12ac4e4a4325
 @bind i Slider(1:size(angles,1), show_value=true)
 
 # ╔═╡ 61048e10-8e23-41a6-8c49-0b1a8c0adc24
-simshow(Array(iradon(patterns[:, i:i], togoc(angles[i:i]); μ=1/350f0, geometry)), cmap=:turbo)
+simshow(Array(backproject(patterns[:, i:i], togoc(angles[i:i]); μ=1/350f0, geometry)), cmap=:turbo)
 
 # ╔═╡ 21c0b369-a4b2-43ea-87b8-702474d88584
 simshow(Array(patterns))

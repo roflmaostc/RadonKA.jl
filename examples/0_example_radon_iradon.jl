@@ -103,16 +103,16 @@ simshow(Array(sinogram_c[:, :, i_z]))
 md"# IRadon Transform"
 
 # ╔═╡ 7e27da5a-1b04-4d4c-8c62-eaffa7f4f9ce
-@time backproject = RadonKA.iradon(sinogram, angles);
+@time backproject = RadonKA.backproject(sinogram, angles);
 
 # ╔═╡ 4e367035-eb2f-4dfa-9646-7c182a111c49
-md"Use this slider to add more and more angles to the iradon transform"
+md"Use this slider to add more and more angles to the backproject transform"
 
 # ╔═╡ b9bf49a0-7320-4269-9a6a-ac2533ab5fde
 @bind angle_limit Slider(1:size(sinogram, 2), default=size(sinogram, 2), show_value=true)
 
 # ╔═╡ 93a7ab4a-b2dc-4fc2-bf69-66e6d615103f
-CUDA.@time CUDA.@sync backproject_cu = RadonKA.iradon(sinogram_c[:, begin:angle_limit, :], togoc(angles[begin:angle_limit]));
+CUDA.@time CUDA.@sync backproject_cu = RadonKA.backproject(sinogram_c[:, begin:angle_limit, :], togoc(angles[begin:angle_limit]));
 
 # ╔═╡ 52a86ed8-4504-4d9e-9ea6-6aeaf8540406
 @bind i_z3 Slider(1:size(sinogram, 3), show_value=true)

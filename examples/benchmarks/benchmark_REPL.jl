@@ -12,10 +12,10 @@ for sz in [(512,512,100), (1920, 1920)]
 
         if d === Array
             @btime radon($arr, $angles)
-            @btime iradon($iarr, $angles)
+            @btime backproject($iarr, $angles)
         else
             @btime CUDA.@sync radon($arr, $angles)
-            @btime CUDA.@sync iradon($iarr, $angles)
+            @btime CUDA.@sync backproject($iarr, $angles)
         end
     end
 end

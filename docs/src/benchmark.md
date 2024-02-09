@@ -30,11 +30,11 @@ Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeF
  sinogram = radon(sample_2D, angles);
  @btime sinogram = radon($sample_2D, $angles);
  simshow(sinogram)
- @btime sample_iradon = iradon($sinogram, $angles);
+ @btime sample_backproject = backproject($sinogram, $angles);
  
  @btime CUDA.@sync sinogram_c = radon($sample_2D_c, $angles_c);
  sinogram_c = radon(sample_2D_c, angles_c);
- @btime CUDA.@sync sample_iradon_c = iradon($sinogram_c, $angles_c);
+ @btime CUDA.@sync sample_backproject_c = backproject($sinogram_c, $angles_c);
  
  
  sample_3D = randn(Float32, (512, 512, 100));
@@ -42,14 +42,14 @@ Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeF
  
  sinogram_3D = radon(sample_3D, angles);
  @btime radon($sample_3D, $angles)
- @btime iradon($sinogram_3D, $angles)
+ @btime backproject($sinogram_3D, $angles)
  
  sinogram_3D_c = radon(sample_3D_c, angles_c)
  @btime CUDA.@sync radon($sample_3D_c, $angles_c)
- @btime CUDA.@sync iradon($sinogram_3D_c, $angles_c)
+ @btime CUDA.@sync backproject($sinogram_3D_c, $angles_c)
 ```
 ![](../assets/radonka_sinogram.png)
-![](../assets/radonka_iradon.png)
+![](../assets/radonka_backproject.png)
 
 
 ## Matlab (R2023a)
@@ -65,10 +65,10 @@ R = R / max(R(:));
 imwrite(R, "/tmp/matlab_sinogram.png");
 
 tic; 
-iR = iradon(R, theta, "linear", "none");
+iR = backproject(R, theta, "linear", "none");
 toc;
 iR = iR / max(iR(:));
-imwrite(iR, "/tmp/matlab_iradon.png");
+imwrite(iR, "/tmp/matlab_backproject.png");
 
 
 
@@ -87,13 +87,13 @@ toc;
 
 tic;
 for i = 1:size(y, 1)
-    ix(i, :, :) = iradon(squeeze(y(i, :, :)), theta);
+    ix(i, :, :) = backproject(squeeze(y(i, :, :)), theta);
 end
 toc;
 ```
 
 ![](../assets/matlab_sinogram.png)
-![](../assets/matlab_iradon.png)
+![](../assets/matlab_backproject.png)
 
 ## Astra
 Some of the benchmarks did not run properly or were providing non-sense.
@@ -174,5 +174,5 @@ np.copy(rec)
 ```
 
 ![](../assets/astra_sinogram.png)
-![](../assets/astra_iradon.png)
+![](../assets/astra_backproject.png)
 

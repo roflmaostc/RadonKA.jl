@@ -24,10 +24,10 @@ angles = range(0f0, 2f0π, 500)[begin:end-1]
 ```
 ![](../assets/sinogram.png)
 
-# inverse Radon (iradon) transform
+# inverse Radon (backproject) transform
 ```julia
 # 0.268649 seconds (147 allocations: 1.015 MiB)
-@time backproject = RadonKA.iradon(sinogram, angles);
+@time backproject = RadonKA.backproject(sinogram, angles);
 
 # in Pluto or Jupyter
 simshow(sinogram)
@@ -35,7 +35,7 @@ simshow(sinogram)
 [simshow(img) simshow(backproject)]
 ```
 Left is the original sample and right the simple backprojection.
-![](../assets/sample_iradon.png)
+![](../assets/sample_backproject.png)
 
 
 # Filtered Backprojection

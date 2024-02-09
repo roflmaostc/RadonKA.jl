@@ -5,7 +5,7 @@ radon
 
 ## IRadon
 ```@docs
-iradon
+backproject
 filtered_backprojection
 ```
 

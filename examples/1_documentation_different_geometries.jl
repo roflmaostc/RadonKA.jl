@@ -38,7 +38,7 @@ end
 geometry_parallel = RadonParallelCircle(N, -(N-1)÷2:(N-1)÷2)
 
 # ╔═╡ 07bec511-7802-45e4-b331-0d35e8f850c1
-projection_parallel = iradon(sinogram, angles; geometry=geometry_parallel);
+projection_parallel = backproject(sinogram, angles; geometry=geometry_parallel);
 
 # ╔═╡ 9e5a58be-0de5-4820-bc3b-6dff931271a9
 simshow(projection_parallel)
@@ -56,7 +56,7 @@ end
 geometry_small = RadonParallelCircle(200, -49:49)
 
 # ╔═╡ 27d5aac8-2528-46f2-a0dd-91c3fe5d275c
-projection_small = iradon(sinogram_small, angles; geometry=geometry_small);
+projection_small = backproject(sinogram_small, angles; geometry=geometry_small);
 
 # ╔═╡ 29c9d1ff-694c-4fff-b551-836cc9eaf347
 simshow(projection_small)
@@ -68,7 +68,7 @@ md"# Similar to fan Beam Tomography"
 geometry_fan = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, range(-(N-1)÷4, (N-1)÷4, N-1))
 
 # ╔═╡ 37d760fa-74e6-47d1-b8e6-3315c1747b4c
-projected_fan = iradon(sinogram, angles; geometry=geometry_fan);
+projected_fan = backproject(sinogram, angles; geometry=geometry_fan);
 
 # ╔═╡ 878121c5-4ad5-477b-88c7-f53df7510052
 simshow(projected_fan, γ=0.01)
@@ -80,7 +80,7 @@ md"# Extreme fan Beam Tomography"
 geometry_extreme = RadonFlexibleCircle(N, -(N-1)÷2:(N-1)÷2, zeros((199,)))
 
 # ╔═╡ 0756e11b-35ca-4eef-be48-52b8b5c098cd
-projected_extreme = iradon(sinogram, angles; geometry=geometry_extreme);
+projected_extreme = backproject(sinogram, angles; geometry=geometry_extreme);
 
 # ╔═╡ 1e22032d-d57d-42d3-a9c5-9f2e94531346
 simshow(projected_extreme, γ=0.01)
@@ -94,7 +94,7 @@ For example, if in your application some rays are stronger than others you can i
 geometry_weight = RadonParallelCircle(N, -(N-1)÷2:(N-1)÷2, abs.(-(N-1)÷2:(N-1)÷2))
 
 # ╔═╡ 45b82171-c581-4fcf-9695-bc51464a2172
-projection_weight = iradon(sinogram, angles; geometry=geometry_weight);
+projection_weight = backproject(sinogram, angles; geometry=geometry_weight);
 
 # ╔═╡ bbb51355-fa72-4064-b10e-46e29f4b2809
 simshow(projection_weight)
@@ -105,7 +105,7 @@ The ray gets some attenuation with `exp(-μ*x)` where `x` is the distance travel
 "
 
 # ╔═╡ b11cb860-3fab-4fc9-8921-bef32a8b7c12
-projected_exp = iradon(sinogram, angles; geometry=geometry_extreme, μ=0.04);
+projected_exp = backproject(sinogram, angles; geometry=geometry_extreme, μ=0.04);
 
 # ╔═╡ 51561641-67a3-46d4-ae87-b896dc351a60
 simshow(projected_exp)
@@ -135,10 +135,10 @@ geometry_extreme2 = RadonFlexibleCircle(N2, -(N2-1)÷2:(N2-1)÷2, zeros((N2-1,))
 simshow(sg_img)
 
 # ╔═╡ 29c25bd9-6359-489d-b0a3-ea767f832a02
-img_iradon = iradon(sg_img, angles2, geometry=geometry_extreme2, μ=0.008);
+img_backproject = backproject(sg_img, angles2, geometry=geometry_extreme2, μ=0.008);
 
 # ╔═╡ 940d3b8b-1797-45f1-b493-02592a39eb19
-simshow(img_iradon)
+simshow(img_backproject)
 
 # ╔═╡ c7dcc341-0afe-4913-b0a8-1869d8f819b4
 md"# How to reconstruct?

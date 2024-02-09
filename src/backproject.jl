@@ -1,18 +1,18 @@
-export iradon
+export backproject
 
-
+@deprecate iradon backproject
 
 # handle 2D
-function iradon(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1};
+function backproject(sinogram::AbstractArray{T, 2}, angles::AbstractArray{T2, 1};
         geometry=RadonParallelCircle(size(sinogram,1) + 1,-(size(sinogram,1))÷2:(size(sinogram,1))÷2), μ=nothing) where {T, T2}
-    view(iradon(reshape(sinogram, (size(sinogram)..., 1)), angles; geometry, μ), :, :, 1)
+    view(backproject(reshape(sinogram, (size(sinogram)..., 1)), angles; geometry, μ), :, :, 1)
 end
 
 
 """
-    iradon(sinogram, θs; <kwargs>)
+    backproject(sinogram, θs; <kwargs>)
 
-Conceptually the adjoint operation of [`radon`](@ref). Intuitively, the `iradon` smears rays back into the space.
+Conceptually the adjoint operation of [`radon`](@ref). Intuitively, the `backproject` smears rays back into the space.
 See also [`radon`](@ref).
 
 # Example
@@ -22,7 +22,7 @@ julia> arr = zeros((5,2)); arr[2,:] .= 1; arr[4, :] .= 1
  1.0
  1.0
 
-julia> iradon(arr, [0, π/2])
+julia> backproject(arr, [0, π/2])
 6×6 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
  0.0  0.0  0.0       0.0  0.0       0.0
  0.0  0.0  0.0       0.0  0.0       0.0
@@ -33,7 +33,7 @@ julia> iradon(arr, [0, π/2])
 
 julia> arr = ones((2,1)); 
 
-julia> iradon(arr, [0], geometry=RadonFlexibleCircle(10, [-3, 3], [0,0]))
+julia> backproject(arr, [0], geometry=RadonFlexibleCircle(10, [-3, 3], [0,0]))
 10×10 view(::Array{Float64, 3}, :, :, 1) with eltype Float64:
  0.0  0.0  0.0       0.0       0.0        0.0      0.0        0.0       0.0       0.0
  0.0  0.0  0.0       0.0       0.0        0.0      0.0        0.0       0.0       0.0
@@ -47,13 +47,13 @@ julia> iradon(arr, [0], geometry=RadonFlexibleCircle(10, [-3, 3], [0,0]))
  0.0  0.0  0.0       0.0       0.0        0.0      0.0        0.0       0.0       0.0
 ```
 """
-function iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
+function backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
         geometry=RadonParallelCircle(size(sinogram,1) + 1,-(size(sinogram,1))÷2:(size(sinogram,1))÷2), μ=nothing) where {T}
-    return _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry, μ)
+    return _backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry, μ)
 end
 
 
-function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where T
+function _backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where T
     @assert size(sinogram, 2) == length(angles_T) "size of angles does not match sinogram size"
     @assert size(sinogram, 1) == size(geometry.in_height, 1)
     if geometry isa RadonFlexibleCircle
@@ -96,14 +96,14 @@ function _iradon(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geomet
     absorb_f = make_absorption_f(μ, T)
 
     # of the kernel goes
-    kernel! = iradon_kernel2!(backend)
+    kernel! = backproject_kernel2!(backend)
     kernel!(img, sinogram, weights, in_height, out_height, angles, mid, radius, absorb_f,
             ndrange=(size(sinogram, 1), N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
     return img 
 end
 
-@kernel function iradon_kernel2!(img::AbstractArray{T}, sinogram::AbstractArray{T}, weights, in_height,
+@kernel function backproject_kernel2!(img::AbstractArray{T}, sinogram::AbstractArray{T}, weights, in_height,
                                  out_height, angles, mid, radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
@@ -159,12 +159,12 @@ end
 
 
  # define adjoint rules
-function ChainRulesCore.rrule(::typeof(_iradon), array::AbstractArray, angles,
+function ChainRulesCore.rrule(::typeof(_backproject), array::AbstractArray, angles,
                               geometry, μ) 
-    res = _iradon(array, angles, geometry, μ)
-    function pb_iradon(ȳ)
+    res = _backproject(array, angles, geometry, μ)
+    function pb_backproject(ȳ)
         ad = _radon(unthunk(ȳ), angles, geometry, μ)
         return NoTangent(), ad, NoTangent(), NoTangent(), NoTangent()
     end
-    return res, pb_iradon 
+    return res, pb_backproject 
 end
