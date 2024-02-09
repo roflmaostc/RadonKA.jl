@@ -42,7 +42,7 @@ simshow(sinogram)
 [simshow(img) simshow(backproject)]
 
 # ╔═╡ ebd1170c-84ea-420d-a2e1-9afe0acb637b
-@time filtered_backproject = RadonKA.filtered_backprojection(sinogram, angles);
+@time filtered_backproject = RadonKA.backproject_filtered(sinogram, angles);
 
 # ╔═╡ 00756bf0-e309-4991-84a8-4afed5cdfa93
 simshow(filtered_backproject)

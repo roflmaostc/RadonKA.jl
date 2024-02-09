@@ -124,7 +124,7 @@ simshow(Array(backproject_cu[:, :, i_z3]))
 md"# Filtered Backprojection"
 
 # ╔═╡ 32b15077-5e09-4693-8f12-3b2029fe63cc
-@mytime filtered_bproj = RadonKA.filtered_backprojection(sinogram_c, togoc(angles));
+@mytime filtered_bproj = RadonKA.backproject_filtered(sinogram_c, togoc(angles));
 
 # ╔═╡ bc6e2d40-fcd1-4d7b-8f96-3d4d9e4336de
 @bind i_z4 Slider(1:size(sinogram, 3), show_value=true)

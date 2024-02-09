@@ -94,12 +94,12 @@ using Zygote
         angles2 = range(0, π, 200);
 
         sinogram2 = radon(array3, angles2)
-        array_filtered = filtered_backprojection(sinogram2, angles2)
+        array_filtered = backproject_filtered(sinogram2, angles2)
         @test ≈(array_filtered / sum(array_filtered) .+ 0.1, array3 / sum(array3) .+ 0.1, rtol=0.06)
 
         geometry = RadonParallelCircle(32, -15:0.1:15)
         sinogram2 = radon(array3, angles2; geometry)
-        array_filtered = filtered_backprojection(sinogram2, angles2; geometry)
+        array_filtered = backproject_filtered(sinogram2, angles2; geometry)
         @test ≈(array_filtered[5:28, 5:28] / sum(array_filtered[5:28, 5:28]) .+ 0.1, array3[5:28, 5:28] / sum(array3[5:28, 5:28]) .+ 0.1, rtol=0.05)
     end
 

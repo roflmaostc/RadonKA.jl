@@ -11,7 +11,7 @@ include("geometry.jl")
 include("utils.jl")
 include("radon.jl")
 include("backproject.jl")
-include("filtered_backprojection.jl")
+include("backproject_filtered.jl")
 
 
 # PrecompileTools
@@ -22,10 +22,10 @@ include("filtered_backprojection.jl")
     @compile_workload begin
         r = radon(Float32.(img), Float32.(angles)) 
         backproject(r, Float32.(angles)) 
-        RadonKA.filtered_backprojection(r, angles)
+        RadonKA.backproject_filtered(r, angles)
         r = radon(img, angles) 
         backproject(r, angles) 
-        RadonKA.filtered_backprojection(r, angles)
+        RadonKA.backproject_filtered(r, angles)
         
         r = radon(Float32.(img), Float32.(angles), μ=0.1f0) 
         backproject(r, Float32.(angles), μ=0.1f0) 

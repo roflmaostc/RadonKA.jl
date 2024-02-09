@@ -6,7 +6,7 @@ radon
 ## IRadon
 ```@docs
 backproject
-filtered_backprojection
+backproject_filtered
 ```
 
 ## Specifying Geometries

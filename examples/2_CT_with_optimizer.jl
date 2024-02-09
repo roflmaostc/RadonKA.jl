@@ -70,7 +70,7 @@ simshow(measurement)
 md"""# Simple Backprojection"""
 
 # ╔═╡ 464f022d-0773-43dd-81a7-ca2f6fc91634
-img_bp = filtered_backprojection(measurement, angles);
+img_bp = backproject_filtered(measurement, angles);
 
 # ╔═╡ 49e59001-0e8d-4872-ae50-47c38486b3fd
 img_backproject = backproject(measurement, angles);

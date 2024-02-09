@@ -1,5 +1,5 @@
 # RadonKA.jl
-A simple yet sufficiently fast Radon and inverse Radon (backproject) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
+A simple yet sufficiently fast Radon and adjoint Radon (backproject) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
 
 ```@raw html
 <a  href="assets/RadonKA_logo.png"><img src="assets/RadonKA_logo.png"  width="200"></a>

@@ -24,7 +24,7 @@ angles = range(0f0, 2f0π, 500)[begin:end-1]
 ```
 ![](../assets/sinogram.png)
 
-# inverse Radon (backproject) transform
+# adjoint Radon (backproject) transform
 ```julia
 # 0.268649 seconds (147 allocations: 1.015 MiB)
 @time backproject = RadonKA.backproject(sinogram, angles);
@@ -42,7 +42,7 @@ Left is the original sample and right the simple backprojection.
 In the absence of noise, the filtered backprojection works well:
 ```julia
 #   0.252915 seconds (171 allocations: 13.664 MiB)
-@time filtered_backproject = RadonKA.filtered_backprojection(sinogram, angles);
+@time filtered_backproject = RadonKA.backproject_filtered(sinogram, angles);
 ```
 ![](../assets/filtered.png)
 

@@ -1,5 +1,5 @@
 # RadonKA.jl
-A simple yet sufficiently fast Radon and inverse Radon (backproject) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
+A simple yet sufficiently fast Radon and adjoint Radon (backproject) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
 It offers multithreading and CUDA support and outperforms any existing Julia Radon transforms (at least the ones we are aware of). 
 On CUDA it is faster much than Matlab and it offers the same or faster speed than ASTRA.
 

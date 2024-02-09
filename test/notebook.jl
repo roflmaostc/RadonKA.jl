@@ -237,7 +237,7 @@ simshow(I_2[:,:,1])
 simshow(sinogram2)
 
 # ╔═╡ ef6de020-ba4a-4dce-8a77-f706c1910270
-array_filtered = filtered_backprojection(sinogram2, angles2)
+array_filtered = backproject_filtered(sinogram2, angles2)
 
 # ╔═╡ ecb578ff-4dca-4260-9124-0bc17499d071
 array_backproject = backproject(sinogram2, angles2)

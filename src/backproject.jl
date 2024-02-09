@@ -13,6 +13,8 @@ end
 Conceptually the adjoint operation of [`radon`](@ref). Intuitively, the `backproject` smears rays back into the space.
 See also [`radon`](@ref).
 
+For filtered backprojection see [`backproject_filtered`](@ref).
+
 # Example
 ```jldoctest
 julia> arr = zeros((5,2)); arr[2,:] .= 1; arr[4, :] .= 1
