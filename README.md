@@ -91,4 +91,4 @@ There exists [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) and
 Again, no arbitrary geometries can be specified. And also no attenuated Radon transform is possible.
 
 ## Matlab
-Matlab has built-in a `radon` and `backproject` transform which is similar to our lightweight API. However, no CUDA acceleration, no 3D arrays and no attenuated Radon transform.
+Matlab has built-in a `radon` and `iradon(...,'linear','none');` transform which is similar to our lightweight API. However, no CUDA acceleration, no 3D arrays and no attenuated Radon transform.
