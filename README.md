@@ -23,7 +23,8 @@ On CUDA it is faster much than Matlab and it offers the same or faster speed tha
 * [x] simple and extensible API
 
 # Installation
-Requires Julia at least 1.9
+This toolbox runs with CUDA support on Linux, Windows and MacOS!
+Requires at least Julia 1.9
 ```julia
 julia> ]add RadonKA
 ```

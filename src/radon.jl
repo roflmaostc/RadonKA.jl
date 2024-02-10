@@ -170,7 +170,7 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
             out_height, angles, mid, radius, absorb_f,
     		ndrange=(N_sinogram, N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
-    return sinogram
+    return sinogram::typeof(img)
 end
 
 @inline inside_circ(ii, jj, mid, radius) = (ii - mid)^2 + (jj - mid)^2 ≤ radius ^2 

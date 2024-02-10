@@ -29,15 +29,16 @@ See [`radon`](@ref) and [`backproject`](@ref) how to apply.
 """
 struct RadonParallelCircle{T, T2} <: RadonGeometry
     N::Int
-    in_height::AbstractVector{T}
-    weights::AbstractVector{T2}
+    in_height::T
+    weights::T2
 
     function RadonParallelCircle(N, in_height)
-        return new{eltype(in_height),eltype(in_height)}(N, in_height, in_height .* 0 .+ 1) 
+        weights = in_height .* 0 .+ 1
+        return new{typeof(in_height), typeof(weights)}(N, in_height, weights) 
     end
 
     function RadonParallelCircle(N, in_height, weights)
-        return new{eltype(in_height),eltype(weights)}(N, in_height, weights) 
+        return new{typeof(in_height),typeof(weights)}(N, in_height, weights) 
     end
 end
 
@@ -60,14 +61,15 @@ See [`radon`](@ref) and [`backproject`](@ref) how to apply.
 """
 struct RadonFlexibleCircle{T, T2, T3} <: RadonGeometry
     N::Int
-    in_height::AbstractVector{T}
-    out_height::AbstractVector{T2}
-    weights::AbstractVector{T3}
+    in_height::T
+    out_height::T2
+    weights::T3
     function RadonFlexibleCircle(N, in_height, out_height)
-        return new{eltype(in_height), eltype(out_height), eltype(in_height)}(N, in_height, out_height, in_height .* 0 .+ 1) 
+        weights = in_height .* 0 .+ 1 
+        return new{typeof(in_height), typeof(out_height), typeof(weights)}(N, in_height, out_height, weights) 
     end
 
     function RadonFlexibleCircle(N, in_height, out_height, weights)
-        return new{eltype(in_height), eltype(out_height), eltype(weights)}(N, in_height, out_height, weights) 
+        return new{typeof(in_height), typeof(out_height), typeof(weights)}(N, in_height, out_height, weights) 
     end
 end
