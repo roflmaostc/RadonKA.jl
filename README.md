@@ -18,7 +18,7 @@ On CUDA it is faster much than Matlab and it offers the same or faster speed tha
 * [x] arbitrary 2D geometries where starting and endpoint of each ray can be specified (fan beam could be a special case of this) (`?RadonFlexibleCircle`)
 * [x] different strength weighting of rays 
 * [x] based on [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) (tested on `CPU()` and `CUDABackend()`)
-* [x] registered adjoint rules for both `radon` and `backproject`
+* [x] registered adjoint rules for both `radon` and `backproject` with ChainRulesCore.jl, hence automatic differentiation (AD) compatible.
 * [x] high performance however not ultra high performance. On par with ASTRA, on CUDA faster than Matlab.
 * [x] simple and extensible API
 
