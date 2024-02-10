@@ -31,7 +31,7 @@ N = 200
 # ╔═╡ 174067b0-c786-4392-8d06-a167f255e4bf
 begin
 	sinogram = zeros((N - 1, length(angles)))
-	sinogram[1:5:end] .= 1
+	sinogram[1:6:end] .= 1
 end
 
 # ╔═╡ 22fe45cd-2f73-4a94-821e-57ee57d0116f
@@ -48,12 +48,15 @@ md"# Make Parallel geometry smaller"
 
 # ╔═╡ 01bcdaab-bc35-458e-8932-7554c83759f2
 begin
-	sinogram_small = zeros((99, length(angles)))
+	sinogram_small = zeros((97, length(angles)))
 	sinogram_small[1:3:end] .= 1
 end
 
+# ╔═╡ dadbe1af-a570-4c66-bf8e-0fb2263f18ea
+ collect(1:3:97)
+
 # ╔═╡ 97b8932e-7a5b-47fc-bf52-36cb9e1e999b
-geometry_small = RadonParallelCircle(200, -49:49)
+geometry_small = RadonParallelCircle(198, -48:48)
 
 # ╔═╡ 27d5aac8-2528-46f2-a0dd-91c3fe5d275c
 projection_small = backproject(sinogram_small, angles; geometry=geometry_small);
@@ -152,16 +155,17 @@ See the other notebooks how to set it up."
 # ╟─3ebc1e08-39da-412e-8902-308a395b7c59
 # ╠═20e238e8-357e-4896-98b0-3c6d0e34a48c
 # ╠═9ed9ed78-11b3-491d-97d5-ce656d0bc270
-# ╠═174067b0-c786-4392-8d06-a167f255e4bf
+# ╟─174067b0-c786-4392-8d06-a167f255e4bf
 # ╠═22fe45cd-2f73-4a94-821e-57ee57d0116f
 # ╠═07bec511-7802-45e4-b331-0d35e8f850c1
 # ╠═9e5a58be-0de5-4820-bc3b-6dff931271a9
 # ╟─511f6c64-6da5-4c8d-8a65-93d648b8887e
 # ╠═01bcdaab-bc35-458e-8932-7554c83759f2
+# ╠═dadbe1af-a570-4c66-bf8e-0fb2263f18ea
 # ╠═97b8932e-7a5b-47fc-bf52-36cb9e1e999b
 # ╠═27d5aac8-2528-46f2-a0dd-91c3fe5d275c
 # ╠═29c9d1ff-694c-4fff-b551-836cc9eaf347
-# ╠═da663a25-6dcd-4664-9bd1-c84970e58346
+# ╟─da663a25-6dcd-4664-9bd1-c84970e58346
 # ╠═65d32c65-6e1f-417b-aba3-3c34dac35e05
 # ╠═37d760fa-74e6-47d1-b8e6-3315c1747b4c
 # ╠═878121c5-4ad5-477b-88c7-f53df7510052
