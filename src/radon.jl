@@ -122,8 +122,8 @@ internal method which handles the different dispatches.
 function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
         geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where  {T}
 
-    @assert size(img, 1) == size(img, 2) "Arrays has to be quadratically shaped"
-    @assert size(img, 1) == geometry.N
+    @assert size(img, 3) == size(img, 2) "Arrays has to be quadratically shaped"
+    @assert size(img, 3) == geometry.N
     if geometry isa RadonFlexibleCircle
         @assert size(geometry.in_height, 1) == size(geometry.out_height, 1)
     end
@@ -153,14 +153,14 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     N_sinogram = length(geometry.in_height)
     # we only propagate inside this in circle
     # convert radius to correct float type, very important for performance!
-    radius = T((size(img, 1) - 1) ÷ 2)
+    radius = T((size(img, 2) - 1) ÷ 2)
     # the midpoint of the array
     # convert to correct type
-    mid = T(size(img, 1) ÷ 2 + 1 +  1 // 2)
+    mid = T(size(img, 2) ÷ 2 + 1 +  1 // 2)
     N_angles = length(angles)
 
     # final sinogram
-    sinogram = similar(img, (N_sinogram, N_angles, size(img, 3)))
+    sinogram = similar(img, (size(img, 1), N_sinogram, N_angles))
     fill!(sinogram, 0)
 
     # create an absorption function, maps just to 1 in case isnothing(μ)
@@ -170,7 +170,7 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     kernel! = radon_kernel!(backend)
     kernel!(sinogram::AbstractArray{T}, img, weights, in_height, 
             out_height, angles, mid, radius, absorb_f,
-            ndrange=size(sinogram))
+            ndrange=(size(sinogram, 2), size(sinogram, 3)))
     KernelAbstractions.synchronize(backend)    
     return sinogram::typeof(img)
 end
@@ -180,7 +180,7 @@ end
 @kernel function radon_kernel!(sinogram::AbstractArray{T}, @Const(img), 
                                 @Const(weights), @Const(in_height), @Const(out_height), @Const(angles), mid,
                                radius, absorb_f) where {T}
-    i, iangle, i_z = @index(Global, NTuple)
+    i, iangle = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
     @inbounds ybegin = T(in_height[i])
@@ -223,11 +223,13 @@ end
         # calculate intersection distance
         distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
         # add value to ray, potentially attenuate by attenuated exp factor
-        @inbounds tmp += weight * distance * 
-                img[icell, jcell, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        wda = weight * distance * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        for i_z in 1:size(img, 1)
+            sinogram[i_z, i, iangle] += wda * img[i_z, icell, jcell]
+        end
         xold, yold = xnew, ynew
     end 
-    @inbounds sinogram[i, iangle, i_z] = tmp
+    #@inbounds sinogram[i_z, i, iangle, i_z] = tmp
 end
 
 
