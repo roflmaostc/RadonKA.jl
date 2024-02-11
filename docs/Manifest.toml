@@ -58,9 +58,9 @@ version = "0.5.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
-git-tree-sha1 = "ab79d1f9754a3988a7792caec43bfdc03996020f"
+git-tree-sha1 = "ad25e7d21ce10e01de973cdc68ad0f850a953c52"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "1.21.0"
+version = "1.21.1"
 weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
@@ -297,21 +297,10 @@ git-tree-sha1 = "60e3045590bd104a16fefb12836c00c0ef8c7f8c"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
 version = "3.0.13+0"
 
-[[deps.OrderedCollections]]
-git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
-uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "1.6.3"
-
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
 version = "10.42.0+1"
-
-[[deps.Parameters]]
-deps = ["OrderedCollections", "UnPack"]
-git-tree-sha1 = "34c0e9ad262e5f7fc75b10a9952ca7692cfc5fbe"
-uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
-version = "0.12.3"
 
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]
@@ -345,10 +334,10 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.RadonKA]]
-deps = ["Atomix", "ChainRulesCore", "FFTW", "IndexFunArrays", "KernelAbstractions", "Parameters", "PrecompileTools"]
+deps = ["Atomix", "ChainRulesCore", "FFTW", "IndexFunArrays", "KernelAbstractions", "PrecompileTools"]
 path = ".."
 uuid = "86de8297-835b-47df-b249-c04e8db91db5"
-version = "0.3.1"
+version = "0.6.0"
 
 [[deps.Random]]
 deps = ["SHA"]
@@ -427,11 +416,6 @@ uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
 uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
-
-[[deps.UnPack]]
-git-tree-sha1 = "387c1f73762231e86e0c9c5443ce3b4a0a9a0c2b"
-uuid = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
-version = "1.0.2"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"

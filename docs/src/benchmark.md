@@ -1,14 +1,14 @@
-# Benchmark and Comparison with Matlab and Astra
+# Benchmark and Comparison with Matlab, Astra, torch-radon
 Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeForce RTX 3060 with Julia 1.10.0 on Ubuntu 22.04.
 
 # Results
 
-|                   |RadonKA.jl CPU | RadonKA.jl GPU    | Matlab CPU | Astra CPU | Astra GPU |
-|-------------------|---------------|-------------------|------------|-----------|-----------|
-|2D sample - Radon  |1.1s           |0.07s              |0.39s       |7.0s       |0.025s     |
-|2D sample - Backprojection |1.4s           |0.50s              |0.37s       |6.4s       |N/A        |
-|3D sample - Radon  |7.4s           |0.28s              |9.01s       |N/A        |1.12s      |
-|3D sample - Backprojection |7.9s           |0.53s              |3.24s       |N/A        |N/A        |
+|                               |RadonKA.jl CPU | RadonKA.jl CUDA    | Matlab CPU | Astra CPU | Astra CUDA |torch-radon CUDA|
+|-------------------------------|---------------|-------------------|------------|-----------|-----------|----------------|
+|2D sample - Radon              |1.1s           |0.07s              |0.39s       |7.0s       |0.025s     |0.011s           | 
+|2D sample - Backprojection     |1.4s           |0.50s              |0.37s       |6.4s       |N/A        |0.008s           | 
+|3D sample - Radon              |7.4s           |0.28s              |9.01s       |N/A        |1.12s      |0.062s          |
+|3D sample - Backprojection     |7.9s           |0.53s              |3.24s       |N/A        |N/A        |0.063s          |
 
 
 
@@ -50,6 +50,48 @@ Tested on a AMD Ryzen 9 5900X 12-Core Processor with 24 Threads and a NVIDIA GeF
 ```
 ![](../assets/radonka_sinogram.png)
 ![](../assets/radonka_backproject.png)
+
+
+## torch-radon
+```python
+import torch
+import torch_radon
+
+
+volume = torch_radon.volumes.Volume2D()
+angles = torch.tensor(np.linspace(0, 2*np.pi, 500), dtype=torch.float32, device="cuda")
+sample = torch.rand(1,1920, 1920, device="cuda")
+radon = torch_radon.ParallelBeam(volume=volume, angles=angles, det_spacing=1.0, det_count=1920)
+
+
+%%timeit
+radon.forward(sample)
+torch.cuda.synchronize()
+
+sinogram = radon.forward(sample)
+
+%%timeit
+radon.backward(sinogram)
+torch.cuda.synchronize()
+
+
+
+angles = torch.tensor(np.linspace(0, 2*np.pi, 500), dtype=torch.float32, device="cuda")
+sample = torch.rand(100, 512, 512, device="cuda")
+radon = torch_radon.ParallelBeam(volume=volume, angles=angles, det_spacing=1.0, det_count=512)
+
+
+%%timeit
+radon.forward(sample)
+torch.cuda.synchronize()
+
+sinogram = radon.forward(sample)
+
+%%timeit
+radon.backward(sinogram)
+torch.cuda.synchronize()
+```
+
 
 
 ## Matlab (R2023a)
@@ -158,7 +200,7 @@ np.copy(proj_data)
 
 rec_id = astra.data3d.create('-vol', vol_geom)
 
-# Set up the parameters for a reconstruction algorithm using the GPU
+# Set up the parameters for a reconstruction algorithm using the CUDA
 cfg = astra.astra_dict('BP3D_CUDA')
 cfg['ReconstructionDataId'] = rec_id
 cfg['ProjectionDataId'] = proj_id
