@@ -103,8 +103,8 @@ function _backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, g
     return img 
 end
 
-@kernel function backproject_kernel2!(img::AbstractArray{T}, sinogram::AbstractArray{T}, weights, in_height,
-                                 out_height, angles, mid, radius, absorb_f) where {T}
+@kernel function backproject_kernel2!(img::AbstractArray{T}, @Const(sinogram), @Const(weights), @Const(in_height),
+        @Const(out_height), @Const(angles), mid, radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])

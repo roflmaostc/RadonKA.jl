@@ -177,8 +177,8 @@ end
 
 @inline inside_circ(ii, jj, mid, radius) = (ii - mid)^2 + (jj - mid)^2 ≤ radius ^2 
 
-@kernel function radon_kernel!(sinogram::AbstractArray{T}, img::AbstractArray{T}, 
-                               weights, in_height, out_height, angles, mid,
+@kernel function radon_kernel!(sinogram::AbstractArray{T}, @Const(img), 
+                                @Const(weights), @Const(in_height), @Const(out_height), @Const(angles), mid,
                                radius, absorb_f) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
