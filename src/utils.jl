@@ -28,15 +28,21 @@ end
 
 @inline function next_cell_intersection(x₀, y₀, x₁, y₁)
     # inspired by 
-    floor_or_ceilx = x₁ ≥ x₀ ? ceil : floor
-    floor_or_ceily = y₁ ≥ y₀ ? ceil : floor
+    #floor_or_ceilx = x₁ ≥ x₀ ? ceil : floor
+    #floor_or_ceily = y₁ ≥ y₀ ? ceil : floor
+    floor_or_ceilx = (x, x₁, x₀) -> ceil(x - (x₁ < x₀))
+    floor_or_ceily = (y, y₁, y₀) -> ceil(y - (y₁ < y₀))
+
     # https://cs.stackexchange.com/questions/132887/determining-the-intersections-of-a-line-segment-and-grid
-    txx = (floor_or_ceilx(x₀)-x₀)
     xdiff = x₁ - x₀
     ydiff = y₁ - y₀
-    txx = ifelse(txx != 0, txx, txx + sign(xdiff))
-    tyy = (floor_or_ceily(y₀)-y₀)
-    tyy = ifelse(tyy != 0, tyy, tyy + sign(ydiff))
+    
+    txx = (floor_or_ceilx(x₀, x₁, x₀)-x₀)
+    #txx = ifelse(txx != 0, txx, txx + sign(xdiff))
+    txx = txx + sign(xdiff) * (txx == 0)
+    tyy = (floor_or_ceily(y₀, y₁, y₀)-y₀)
+    #tyy = ifelse(tyy != 0, tyy, tyy + sign(ydiff))
+    tyy = tyy + sign(ydiff) * (tyy == 0)
     
     tx = txx / (xdiff)
     ty = tyy / (ydiff)
