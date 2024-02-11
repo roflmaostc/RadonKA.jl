@@ -133,10 +133,12 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     angles = similar(img, (size(angles_T, 1),))
     angles .= typeof(angles)(angles_T) 
     
+    # in_height could be a range or a CPU vector, so convert it to an array
     in_height = similar(img, (size(geometry.in_height, 1),))
     in_height .= typeof(in_height)(geometry.in_height) 
     
 
+    # wieghts could be a range or a CPU vector, so convert it to an array
     weights = similar(img, (size(geometry.in_height, 1),))
     weights .= typeof(weights)(geometry.weights) 
 
@@ -153,7 +155,7 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     # convert radius to correct float type, very important for performance!
     radius = T((size(img, 1) - 1) ÷ 2)
     # the midpoint of the array
-    # convert to good type
+    # convert to correct type
     mid = T(size(img, 1) ÷ 2 + 1 +  1 // 2)
     N_angles = length(angles)
 
@@ -168,7 +170,7 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
     kernel! = radon_kernel!(backend)
     kernel!(sinogram::AbstractArray{T}, img, weights, in_height, 
             out_height, angles, mid, radius, absorb_f,
-    		ndrange=(N_sinogram, N_angles, size(img, 3)))
+            ndrange=size(sinogram))
     KernelAbstractions.synchronize(backend)    
     return sinogram::typeof(img)
 end
@@ -181,7 +183,6 @@ end
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
-
     @inbounds ybegin = T(in_height[i])
     @inbounds yend = T(out_height[i])
 
