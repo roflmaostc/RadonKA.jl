@@ -17,6 +17,14 @@ using Zygote
         @test radon(x, [0, π / 2, π, (3 / 2) * π, 2π]) ≈ [0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0; 1.0 1.0 1.0 1.0 1.0; 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0]
         x = zeros((7,7)); x[4,3] = 1
         @test radon(x, [0, π / 2, π, (3 / 2) * π, 2π]) ≈ [0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0; 1.0 0.0 0.0 0.0 1.0; 0.0 1.0 0.0 1.0 0.0; 0.0 0.0 1.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0; 0.0 0.0 0.0 0.0 0.0] 
+
+        x = zeros((5,5));x[3,3] = 1
+        @test radon(x, [0], geometry = RadonParallelCircle(5, (-1:0.25:1) .- 0.1)) ≈ [0.0; 0.0; 0.0; 1.0; 1.0; 1.0; 1.0; 0.0; 0.0;;]
+        @test radon(x, [0], geometry = RadonParallelCircle(5, (-1:0.25:1) .+ 0.1)) ≈ [0.0; 0.0; 1.0; 1.0; 1.0; 1.0; 0.0; 0.0; 0.0;;]
+        @test radon(x, [0], geometry = RadonParallelCircle(5, [0.499])) == [1.0;;]
+        @test radon(x, [0], geometry = RadonParallelCircle(5, [-0.499])) == [1.0;;]
+        @test radon(x, [0], geometry = RadonParallelCircle(5, [-0.5001])) == [0.0;;]
+        @test radon(x, [0], geometry = RadonParallelCircle(5, [+0.5001])) == [0.0;;]
     end
 
     @testset "Simple backproject test" begin
