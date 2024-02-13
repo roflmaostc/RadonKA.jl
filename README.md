@@ -73,6 +73,19 @@ The following examples show case the ability of this package:
 * Reconstruction of a CT dataset with an optimizer: [Pluto notebook](examples/2_CT_with_optimizer.jl)
 * How this package is used in Tomographic Volumetric Additive Manufacturing (3D printing): [Pluto notebook](examples/4_Tomographic_Volumetric_Additive_Manufacturing_with_Refraction.jl)
 
+# Citation
+This package was created as part of scientific work. Please consider citing it :)
+```bibtex
+@misc{wechsler2024wave,
+      title={Wave optical model for tomographic volumetric additive manufacturing}, 
+      author={Felix Wechsler and Carlo Gigli and Jorge Madrid-Wolff and Christophe Moser},
+      year={2024},
+      eprint={2402.06283},
+      archivePrefix={arXiv},
+      primaryClass={physics.optics}
+}
+```
+
 # Development
 File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](https://github.com/roflmaostc/RadonKA.jl) if you encounter any problems.
 You can also join [my conference room](https://epfl.zoom.us/my/wechsler). Give me a minute to join!

@@ -59,4 +59,15 @@ Another one covers how the Radon transform is used in [Volumetric Additive Manuf
 # Development
 File an [issue](https://github.com/roflmaostc/RadonKA.jl/issues) on [GitHub](https://github.com/roflmaostc/RadonKA.jl) if you encounter any problems.
 
-
+# Citation
+This package was created as part of scientific work. Please consider citing it :)
+```bibtex
+@misc{wechsler2024wave,
+      title={Wave optical model for tomographic volumetric additive manufacturing}, 
+      author={Felix Wechsler and Carlo Gigli and Jorge Madrid-Wolff and Christophe Moser},
+      year={2024},
+      eprint={2402.06283},
+      archivePrefix={arXiv},
+      primaryClass={physics.optics}
+}
+```
