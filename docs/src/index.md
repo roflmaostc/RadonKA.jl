@@ -2,7 +2,7 @@
 A simple yet sufficiently fast Radon and adjoint Radon (backproject) transform implementation using [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
 
 ```@raw html
-<a  href="assets/RadonKA_logo.png"><img src="assets/RadonKA_logo.png"  width="200"></a>
+<a  href="assets/logo.png"><img src="assets/logo.png"  width="200"></a>
 ```
 
 [![Build Status](https://github.com/roflmaostc/RadonKA.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/roflmaostc/RadonKA.jl/actions/workflows/CI.yml?query=branch%3Amain)

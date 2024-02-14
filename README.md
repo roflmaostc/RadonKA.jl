@@ -5,7 +5,7 @@ On CUDA it is faster much than Matlab and it offers the same or faster speed tha
 
 #### ⚠️ This package is still very young. I would be happy to receive any feedback or if we can improve anything, just open an issue! ⚠️
 
-<a  href="docs/src/assets/RadonKA_logo.png"><img src="docs/src/assets/RadonKA_logo.png"  width="200"></a>
+<a  href="docs/src/assets/logo.png"><img src="docs/src/assets/logo.png"  width="200"></a>
 
 [![Build Status](https://github.com/roflmaostc/RadonKA.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/roflmaostc/RadonKA.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/roflmaostc/RadonKA.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/roflmaostc/RadonKA.jl) [![Documentation for stable version](https://img.shields.io/badge/docs-stable-blue.svg)](https://roflmaostc.github.io/RadonKA.jl/stable) [![Documentation for development version](https://img.shields.io/badge/docs-main-blue.svg)](https://roflmaostc.github.io/RadonKA.jl/dev)
