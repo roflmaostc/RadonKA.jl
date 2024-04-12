@@ -71,6 +71,22 @@ using Zygote
         @test exp.(-(1:1:8).* 0.1) ≈ arr[begin+1:end-1, 6][:]
     end
 
+    @testset "Compare with array absorption" begin
+	    sinogram = zeros(Float64, (9, 10))
+	    sinogram[5, :] .= 1
+        angles = range(0, 2π, 10)
+        arr1 = backproject(sinogram, angles, μ=0.1)
+        arr2 = backproject(sinogram, angles, μ=0.1 * ones((10, 10)))
+        @test all(.≈(arr1, arr2, rtol=0.08))
+
+        
+        array = zeros((16, 16,1))
+        arr1 = radon(array, angles, μ=0.1)
+        arr2 = radon(array, angles, μ=0.1 * ones((10, 10)))
+        @test all(.≈(arr1, arr2, rtol=0.09))
+
+    end
+
 
     @testset "Compare with theoretical radon" begin
 
@@ -136,11 +152,14 @@ using Zygote
             geometry1 = RadonFlexibleCircle(size(x, 1), -(size(x,1)-1)÷2:(size(x,1)-1)÷2, 0 .* (-(size(x,1)-1)÷2:(size(x,1)-1)÷2), (-(size(x,1)-1)÷2:(size(x,1)-1)÷2)) 
             for geometry in [geometry, geometry1]
                 test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
+                test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), randn(size(x)...) ⊢ ChainRulesTestUtils.NoTangent())
+
                 y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
                 test_rrule(RadonKA._backproject, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), nothing ⊢ ChainRulesTestUtils.NoTangent())
             
                 test_rrule(RadonKA._radon, x, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1⊢ ChainRulesTestUtils.NoTangent())
                 y = radon(x, [0, π/4, π/2, 2π, 0.1, 0.00001])
+                test_rrule(RadonKA._backproject, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), randn(size(x)...) ⊢ ChainRulesTestUtils.NoTangent())
                 test_rrule(RadonKA._backproject, y, [0, π/4, π/2, 2π, 0.1, 0.00001] ⊢ ChainRulesTestUtils.NoTangent(), geometry ⊢ ChainRulesTestUtils.NoTangent(), 0.1 ⊢ ChainRulesTestUtils.NoTangent())
             end
         end
