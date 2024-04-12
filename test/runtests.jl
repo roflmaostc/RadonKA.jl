@@ -77,13 +77,13 @@ using Zygote
         angles = range(0, 2π, 10)
         arr1 = backproject(sinogram, angles, μ=0.1)
         arr2 = backproject(sinogram, angles, μ=0.1 * ones((10, 10)))
-        @test all(.≈(arr1, arr2, rtol=0.08))
+        @test all(.≈(arr1, arr2, rtol=0.001))
 
         
         array = zeros((16, 16,1))
         arr1 = radon(array, angles, μ=0.1)
-        arr2 = radon(array, angles, μ=0.1 * ones((10, 10)))
-        @test all(.≈(arr1, arr2, rtol=0.09))
+        arr2 = radon(array, angles, μ=0.1 * ones((16, 16)))
+        @test all(.≈(arr1, arr2, rtol=0.001))
 
     end
 

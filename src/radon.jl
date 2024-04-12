@@ -265,11 +265,10 @@ end
 @inline function calc_deposit_value(value_in, weight, sinogram, i, iangle, i_z, icell, jcell, xnew, ynew, x_dist_rot, y_dist_rot, absorb_f, xold, yold, ray_intensity, μ_array)
     distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
     
-    @inbounds ray_intensity -= ray_intensity * (distance) * μ_array[icell, jcell, i_z] / 2
-    ray_intensity = max(ray_intensity, zero(typeof(ray_intensity)))
+
+    @inbounds f = exp(-distance * μ_array[icell, jcell, i_z])
+    ray_intensity *= f 
     value = value_in * weight * distance * ray_intensity 
-    @inbounds ray_intensity -= ray_intensity * (distance) * μ_array[icell, jcell, i_z] / 2
-    ray_intensity = max(ray_intensity, zero(typeof(ray_intensity)))
     return value, ray_intensity
 end
 
