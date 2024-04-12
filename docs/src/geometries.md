@@ -92,3 +92,23 @@ simshow(projected_exp)
 ![](../assets/parallel_geometry_mu.png)
 
 
+### Spatially Varying Absorption
+
+The ray gets some attenuation with `exp(-μ*x)` where `μ` varies spatially.
+To represent this spatial variation, we can simply use an array for μ.
+
+```julia
+μ = 0.5 .* box((N, N), (2, 50));
+
+simshow(μ)
+```
+![](../assets/mu_spatially.png)
+
+
+```julia
+projected_1 = backproject(sinogram, angles, μ=μ);
+projected_2 = backproject(sinogram, angles .+ π / 4, μ=μ);
+
+[simshow(projected_1) simshow(projected_2)]
+```
+![](../assets/mu_spatially_backprojected.png)
