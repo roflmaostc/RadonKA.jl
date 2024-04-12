@@ -49,6 +49,9 @@ is the distance to the circular boundary of the field of view.
 `μ` is in units of pixel length. So `μ=1` corresponds to an attenuation of `exp(-1)` if propagated through one pixel.
 If `isnothing(μ)`, then the rays are not attenuated.
 
+`μ` can be also an array of the same size as `I` which allows for spatially varying attenuation. For example, `μ=0.01`  and `μ = ones(size(I)) * 0.01` are equivalent.
+In practice there is a slight difference because we calculate the attenuation differently.
+
 ## `geometry = RadonParallelCircle(-(size(img,1)-1)÷2:(size(img,1)-1)÷2)`
 This corresponds to a parallel Radon transform. 
 See `?RadonGeometries` for a full list of geometries. There is also the very flexible `RadonFlexibleCircle`.
