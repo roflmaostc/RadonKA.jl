@@ -101,8 +101,8 @@ There is a [torch-radon fork](https://github.com/carterbox/torch-radon) which al
 
 
 ## Julia
-There exists [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) and in general the whole [JuliaImageRecon](https://github.com/JuliaImageRecon) organization.
-Again, no arbitrary geometries can be specified. And also no attenuated Radon transform is possible.
+There is [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) and the [JuliaImageRecon](https://github.com/JuliaImageRecon) organization.
+No arbitrary geometries can be specified. And also no attenuated Radon transform is possible.
 
 ## Matlab
 Matlab has built-in a `radon` and `iradon(...,'linear','none');` transform which is similar to our lightweight API. However, no CUDA acceleration, no 3D arrays and no attenuated Radon transform.
