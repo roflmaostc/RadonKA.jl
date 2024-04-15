@@ -53,7 +53,8 @@ function backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector;
 end
 
 
-function _backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where T
+function _backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, 
+                      geometry::Union{RadonParallelCircle, RadonFlexibleCircle}, μ) where T
     @assert size(sinogram, 2) == length(angles_T) "size of angles does not match sinogram size"
     @assert size(sinogram, 1) == size(geometry.in_height, 1)
     if geometry isa RadonFlexibleCircle
@@ -95,16 +96,22 @@ function _backproject(sinogram::AbstractArray{T, 3}, angles_T::AbstractVector, g
     # create an absorption function, maps just to 1 in case isnothing(μ)
     absorb_f = make_absorption_f(μ, T)
 
+    μ_array = _get_μ_array(μ)
+
     # of the kernel goes
     kernel! = backproject_kernel2!(backend)
-    kernel!(img, sinogram, weights, in_height, out_height, angles, mid, radius, absorb_f,
+    kernel!(img, sinogram, weights, in_height, out_height, angles, 
+            mid, radius, absorb_f, μ_array,
             ndrange=(size(sinogram, 1), N_angles, size(img, 3)))
     KernelAbstractions.synchronize(backend)    
     return img 
 end
 
-@kernel function backproject_kernel2!(img::AbstractArray{T}, @Const(sinogram), @Const(weights), @Const(in_height),
-        @Const(out_height), @Const(angles), mid, radius, absorb_f) where {T}
+
+
+@kernel function backproject_kernel2!(img::AbstractArray{T}, @Const(sinogram),
+        @Const(weights), @Const(in_height), @Const(out_height), @Const(angles), 
+        mid, radius, absorb_f, μ_array) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
@@ -133,6 +140,7 @@ end
 
 
     tmp = zero(T)
+    ray_intensity = one(T)
     # we store old_direction
     # if the sign of old_direction changes, we have to stop tracing
     # because then we hit the end point 
@@ -148,11 +156,21 @@ end
         # switch of i and j intentional to keep it consistent with existing code
         icell, jcell = find_cell(xnew, ynew, xold, yold)
 
-        # calculate intersection distance
-        distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
+
+        # there is two different cases.
+        # - one μ_array which is nothing in case the absorption is constant, then we use
+        #   the simple absorption function absorb_f
+        # - one μ_array which is not nothing, then we use the absorption array
+        #   and calculate the absorption with the ray_intensity iteratively
+        #   based on the previous value of the ray_intensity. Slightly more inaccurate
+        #   but the only option if μ is not constant in space
+        @inbounds value_in = sinogram[i, iangle, i_z]
+        value, ray_intensity = calc_deposit_value(value_in,  weight, sinogram, i, 
+                                                  iangle, i_z, icell, jcell, xnew, ynew,
+                                                  x_dist_rot, y_dist_rot, absorb_f,
+                                                  xold, yold, ray_intensity, μ_array)
         # add value to ray, potentially attenuate by attenuated exp factor
-        @inbounds Atomix.@atomic img[icell, jcell, i_z] += weight * distance * 
-                sinogram[i, iangle, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        @inbounds Atomix.@atomic img[icell, jcell, i_z] += value 
         xold, yold = xnew, ynew
     end 
 end

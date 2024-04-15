@@ -1,13 +1,21 @@
 export radon
 
 
+_get_μ_array(μ::Nothing) = nothing 
+_get_μ_array(μ::Number) = nothing
+_get_μ_array(μ::AbstractArray) = μ
+
+
+
+
 function make_absorption_f(μ, ::Type{T}) where T
-    if isnothing(μ)
-        @inline (x, y, x_start, y_start) -> one(T)
-    else
-        @inline (x, y, x_start, y_start) -> exp(-T(μ) * sqrt((x - x_start)^2 + (y - y_start)^2))
-    end
+    @inline (i, j, iz, x, y, x_start, y_start) -> one(T)
 end
+
+function make_absorption_f(μ::Number, ::Type{T}) where T
+    @inline (i, j, iz, x, y, x_start, y_start) -> exp(-T(μ) * sqrt((x - x_start)^2 + (y - y_start)^2))
+end
+
 
 
 # handle 2D
@@ -40,6 +48,9 @@ If `μ != nothing`, then the rays are attenuated with `exp(-μ * dist)` where `d
 is the distance to the circular boundary of the field of view.
 `μ` is in units of pixel length. So `μ=1` corresponds to an attenuation of `exp(-1)` if propagated through one pixel.
 If `isnothing(μ)`, then the rays are not attenuated.
+
+`μ` can be also an array of the same size as `I` which allows for spatially varying attenuation. For example, `μ=0.01`  and `μ = ones(size(I)) * 0.01` are equivalent.
+In practice there is a slight difference because we calculate the attenuation differently.
 
 ## `geometry = RadonParallelCircle(-(size(img,1)-1)÷2:(size(img,1)-1)÷2)`
 This corresponds to a parallel Radon transform. 
@@ -165,11 +176,13 @@ function _radon(img::AbstractArray{T, 3}, angles_T::AbstractVector,
 
     # create an absorption function, maps just to 1 in case isnothing(μ)
     absorb_f = make_absorption_f(μ, T)
+    
+    μ_array = _get_μ_array(μ)
 
     # of the kernel goes
     kernel! = radon_kernel!(backend)
     kernel!(sinogram::AbstractArray{T}, img, weights, in_height, 
-            out_height, angles, mid, radius, absorb_f,
+            out_height, angles, mid, radius, absorb_f, μ_array,
             ndrange=size(sinogram))
     KernelAbstractions.synchronize(backend)    
     return sinogram::typeof(img)
@@ -178,8 +191,9 @@ end
 @inline inside_circ(ii, jj, mid, radius) = (ii - mid)^2 + (jj - mid)^2 ≤ radius ^2 
 
 @kernel function radon_kernel!(sinogram::AbstractArray{T}, @Const(img), 
-                                @Const(weights), @Const(in_height), @Const(out_height), @Const(angles), mid,
-                               radius, absorb_f) where {T}
+                                @Const(weights), @Const(in_height), 
+                                @Const(out_height), @Const(angles), mid,
+                                radius, absorb_f, μ_array) where {T}
     i, iangle, i_z = @index(Global, NTuple)
     
     @inbounds sinα, cosα = sincos(angles[iangle])
@@ -205,6 +219,7 @@ end
 
 
     tmp = zero(T)
+    ray_intensity = one(T)
     # we store old_direction
     # if the sign of old_direction changes, we have to stop tracing
     # because then we hit the end point 
@@ -220,15 +235,43 @@ end
         # switch of i and j intentional to keep it consistent with existing code
         icell, jcell = find_cell(xnew, ynew, xold, yold)
 
-        # calculate intersection distance
-        distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
+        @inbounds value_in = img[icell, jcell, i_z]
+        value, ray_intensity = calc_deposit_value(value_in,  weight, sinogram, i, 
+                                                  iangle, i_z, icell, jcell, xnew, ynew,
+                                                  x_dist_rot, y_dist_rot, absorb_f,
+                                                  xold, yold, ray_intensity, μ_array)
         # add value to ray, potentially attenuate by attenuated exp factor
-        @inbounds tmp += weight * distance * 
-                img[icell, jcell, i_z] * absorb_f(xnew, ynew, x_dist_rot, y_dist_rot)
+        @inbounds tmp += value 
         xold, yold = xnew, ynew
     end 
     @inbounds sinogram[i, iangle, i_z] = tmp
 end
+
+# we have two different cases
+# - one μ_array which is nothing in case the absorption is constant, then we use
+#   the simple absorption function absorb_f
+# - one μ_array which is not nothing, then we use the absorption array
+#
+# the function returns the value and the new ray_intensity
+# so we can reuse the whole code but whether if μ is an array or not, we do 
+# two different things
+@inline function calc_deposit_value(value_in, weight, sinogram, i, iangle, i_z, icell, jcell, xnew, ynew, x_dist_rot, y_dist_rot, absorb_f, xold, yold, ray_intensity, μ_array::Nothing)
+    # calculate intersection distance
+    distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
+    value = weight * distance * value_in * absorb_f(icell, jcell, i_z, xnew, ynew, x_dist_rot, y_dist_rot)
+    return value, ray_intensity
+end
+
+@inline function calc_deposit_value(value_in, weight, sinogram, i, iangle, i_z, icell, jcell, xnew, ynew, x_dist_rot, y_dist_rot, absorb_f, xold, yold, ray_intensity, μ_array)
+    distance = sqrt((xnew - xold)^2 + (ynew - yold) ^2)
+    
+
+    @inbounds f = exp(-distance * μ_array[icell, jcell, i_z])
+    ray_intensity *= f 
+    value = value_in * weight * distance * ray_intensity 
+    return value, ray_intensity
+end
+
 
 
 
