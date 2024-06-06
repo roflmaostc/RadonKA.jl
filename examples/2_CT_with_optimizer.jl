@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.38
+# v0.19.40
 
 using Markdown
 using InteractiveUtils
@@ -14,6 +14,9 @@ end
 
 # ╔═╡ 1a255b6f-e83a-481b-8017-ecc996bc4929
 using Zygote, Optim, RadonKA, TestImages, ImageShow, Noise, Plots,PlutoUI,Statistics
+
+# ╔═╡ 80e0c1fe-f5c6-4765-9337-7b877c861772
+using DifferentiationInterface, Enzyme, Tapir
 
 # ╔═╡ a0057ab8-5c84-4f63-882f-1ac6f84fbc5e
 using CUDA
@@ -92,18 +95,21 @@ The gradient is calculated by automatic differentiation and the reverse rules of
 "
 
 # ╔═╡ cdf0f1fb-c95f-43ab-a41f-159f4963f3af
-function make_fg!(fwd_operator, measurement; λ=0.01f0, regularizer=x -> zero(eltype(x)))
+function make_fg!(fwd_operator, measurement, pat0; λ=0.01f0, regularizer=x -> zero(eltype(x)))
 
 	f(x) = mean(abs2, fwd_operator(x) .- measurement) + λ * regularizer(x)
 
+	backend = AutoEnzyme(Enzyme.Reverse)
+    extras = prepare_gradient(f, backend, similar(pat0)) 
  	# some Optim boilerplate to get gradient and loss as fast as possible
-    fg! = let f=f
-        function fg!(F, G, x)  
+    fg! = let f=f, backend=backend, extras=extras
+		function fg!(F, G, x)  
             # Zygote calculates both derivative and loss
             if G !== nothing
-                y, back = Zygote.withgradient(f, x)
+                #y, back = Zygote.withgradient(f, x)
+				y, gg = DifferentiationInterface.value_and_gradient!(f, G, backend, x, extras) 
                 # calculate gradient
-                G .= back[1]
+                #G .= back[1]
                 if F !== nothing
                     return y
                 end
@@ -116,11 +122,11 @@ function make_fg!(fwd_operator, measurement; λ=0.01f0, regularizer=x -> zero(el
 	return fg!
 end
 
-# ╔═╡ 6a6b53c8-b5f2-46e6-ada1-ee53d99db4d2
-fg! = make_fg!(x -> radon(x, angles), measurement)
-
 # ╔═╡ 8f7688e7-208e-466b-b58d-b3e92aae87b3
 init0 = ones(Float32, size(img));
+
+# ╔═╡ 6a6b53c8-b5f2-46e6-ada1-ee53d99db4d2
+fg! = make_fg!(x -> radon(x, angles), measurement, init0)
 
 # ╔═╡ d65efdb0-4c80-4119-9fcd-185d13c37b2a
 @time fg!(copy(init0), copy(init0), init0)
@@ -129,6 +135,9 @@ init0 = ones(Float32, size(img));
 @time res = Optim.optimize(Optim.only_fg!(fg!), init0, LBFGS(),
                                  Optim.Options(iterations = 20,  
                                                store_trace=true))
+
+# ╔═╡ 8b1a01d9-06b5-499c-bce8-0cbda611e0c3
+  2.626358 seconds (37.31 k allocations: 108.921 MiB, 0.33% gc time)
 
 # ╔═╡ 27488594-0dfd-419d-be5c-0047b2ebdb59
 plot([a.value for a in res.trace], xlabel="Iterations", ylabel="loss value", yscale=:log10)
@@ -275,6 +284,7 @@ problem = OptimizationProblem(opt_fun, init0_c, angles_c);
 # ╟─d2d039dd-b584-4f72-b16b-1d54841ee767
 # ╠═72f79d9e-a0dc-11ee-3eee-979a9f94c302
 # ╠═1a255b6f-e83a-481b-8017-ecc996bc4929
+# ╠═80e0c1fe-f5c6-4765-9337-7b877c861772
 # ╠═063d95c7-d150-48f6-b04a-b2026ac4ba69
 # ╠═a0057ab8-5c84-4f63-882f-1ac6f84fbc5e
 # ╠═f4ca400d-2405-40bf-95d8-35580b9871c3
@@ -296,6 +306,7 @@ problem = OptimizationProblem(opt_fun, init0_c, angles_c);
 # ╠═d65efdb0-4c80-4119-9fcd-185d13c37b2a
 # ╠═8f7688e7-208e-466b-b58d-b3e92aae87b3
 # ╠═fc5aae11-793a-47f0-9759-2cc5d856d6a4
+# ╠═8b1a01d9-06b5-499c-bce8-0cbda611e0c3
 # ╠═27488594-0dfd-419d-be5c-0047b2ebdb59
 # ╠═9f3d751e-6576-420d-8e5f-a4245be1bb0f
 # ╟─538fec79-94c8-4374-9176-c4dc2c149a74
