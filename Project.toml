@@ -12,7 +12,7 @@ KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 
 [compat]
-Atomix = "0.1"
+Atomix = "0.1, 1"
 ChainRulesCore = "1"
 FFTW = "1.7"
 IndexFunArrays = "0.2"
