@@ -14,9 +14,9 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 [compat]
 Atomix = "1"
 ChainRulesCore = "1"
-FFTW = "1.7"
+FFTW = "1.7, 1.8"
 IndexFunArrays = "0.2"
-KernelAbstractions = "0.9.28"
+KernelAbstractions = "0.9"
 PrecompileTools = "1.2"
 julia = "1"
 
